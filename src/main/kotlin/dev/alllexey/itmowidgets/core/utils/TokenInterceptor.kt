@@ -18,7 +18,6 @@ class TokenInterceptor(
         }
 
         try {
-            // Use runBlocking for the interceptor context, as Interceptors are not suspendable by default.
             val validTokens = runBlocking { itmoWidgets.getValidTokensAsync().getOrThrow() }
             val newRequest = request.newBuilder()
                 .header("Authorization", "Bearer ${validTokens.accessToken}")

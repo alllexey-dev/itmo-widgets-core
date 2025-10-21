@@ -8,17 +8,20 @@ import dev.alllexey.itmowidgets.core.model.ItmoTokenLoginRequest
 import dev.alllexey.itmowidgets.core.model.RefreshTokenRequest
 import dev.alllexey.itmowidgets.core.model.TokenResponse
 import dev.alllexey.itmowidgets.core.utils.AuthenticationException
+import dev.alllexey.itmowidgets.core.utils.InstantTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.ItmoWidgetsException
 import dev.alllexey.itmowidgets.core.utils.NetworkException
+import dev.alllexey.itmowidgets.core.utils.RuntimeStorage
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import java.time.Instant
 
 open class ItmoWidgetsImpl(
     val myItmo: MyItmo,
-    val storage: ItmoWidgetsStorage,
+    val storage: ItmoWidgetsStorage = RuntimeStorage(),
     private val baseUrl: String = "https://widgets.alllexey.dev"
 ) : ItmoWidgets {
 
@@ -41,7 +44,9 @@ open class ItmoWidgetsImpl(
     }
 
     protected val gson: Gson by lazy {
-        myItmo.gson
+        myItmo.gson.newBuilder()
+            .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .create()
     }
 
     override fun api() = api
