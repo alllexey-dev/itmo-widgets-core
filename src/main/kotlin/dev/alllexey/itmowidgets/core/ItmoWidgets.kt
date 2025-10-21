@@ -17,8 +17,7 @@ interface ItmoWidgets {
     fun gson(): Gson
 
     fun storage(): ItmoWidgetsStorage
-
-
+    
     fun loginBlocking(): TokenResponse
 
     fun refreshTokensBlocking(): TokenResponse
