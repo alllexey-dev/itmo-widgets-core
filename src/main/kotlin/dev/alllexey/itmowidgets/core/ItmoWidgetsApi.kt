@@ -31,4 +31,7 @@ interface ItmoWidgetsApi {
 
     @DELETE("/api/session/all")
     suspend fun endAllSessions(): ApiResponse<String>
+
+    @GET("/api/app/version")
+    suspend fun getLatestAppVersion(): ApiResponse<String>
 }
