@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "dev.alllexey"
-version = "1.0.2"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
@@ -47,7 +47,7 @@ mavenPublishing {
 }
 
 dependencies {
-    api("dev.alllexey:my-itmo-api:1.3.4")
+    api("dev.alllexey:my-itmo-api:1.3.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     testImplementation(kotlin("test"))
 }
