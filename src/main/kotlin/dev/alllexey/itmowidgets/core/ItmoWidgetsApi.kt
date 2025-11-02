@@ -42,8 +42,8 @@ interface ItmoWidgetsApi {
     @DELETE("/api/sport/filter/all")
     suspend fun deleteAllSportFilters(): ApiResponse<String>
 
-    @POST("/api/sport/filter/new")
-    suspend fun newSportFilter(@Body request: SportFilterRequest): ApiResponse<SportFilterResponse>
+    @POST("/api/sport/filter/create")
+    suspend fun createSportFilter(@Body request: SportFilterRequest): ApiResponse<SportFilterResponse>
 
     @POST("/api/sport/filter/{id}")
     suspend fun editSportFilter(@Path("id") id: Long, @Body request: SportFilterRequest): ApiResponse<SportFilterResponse>
