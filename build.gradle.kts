@@ -47,7 +47,7 @@ mavenPublishing {
 }
 
 dependencies {
-    api("dev.alllexey:my-itmo-api:1.3.6")
+    api("dev.alllexey:my-itmo-api:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     testImplementation(kotlin("test"))
 }
