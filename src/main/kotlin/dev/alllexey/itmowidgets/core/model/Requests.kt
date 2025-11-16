@@ -16,3 +16,7 @@ data class SportFilterRequest(
     val timeSlotIds: List<Long>,
     val teacherIds: List<Long>,
 )
+
+data class SportFreeSignRequest(
+    val lessonId: Long
+)

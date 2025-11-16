@@ -1,7 +1,7 @@
 package dev.alllexey.itmowidgets.core.model
 
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 data class TokenResponse(
     val accessToken: String,
@@ -17,4 +17,11 @@ data class SportFilterResponse(
     val buildingIds: List<Long>,
     val timeSlotIds: List<Long>,
     val teacherIds: List<Long>,
+)
+
+data class SportFreeSignEntry(
+    val id: Long,
+    val lessonId: Long,
+    val position: Int,
+    val total: Int
 )

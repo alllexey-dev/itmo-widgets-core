@@ -51,8 +51,14 @@ interface ItmoWidgetsApi {
     @DELETE("/api/sport/filter/{id}")
     suspend fun deleteSportFilter(@Path("id") id: Long): ApiResponse<String>
 
-    @GET("/api/sport/filter/allowed-building-ids")
-    suspend fun allowedBuildingIds(): ApiResponse<List<Long>>
+    @GET("/api/sport/free-sign/all")
+    suspend fun allFreeSignEntries(): ApiResponse<List<SportFreeSignEntry>>
+
+    @POST("/api/sport/free-sign/create")
+    suspend fun createFreeSignEntry(@Body request: SportFreeSignRequest): ApiResponse<SportFreeSignEntry>
+
+    @DELETE("/api/sport/free-sign/{id}")
+    suspend fun deleteFreeSignEntry(@Path("id") id: Long): ApiResponse<String>
 
     // endregion sport
 }
