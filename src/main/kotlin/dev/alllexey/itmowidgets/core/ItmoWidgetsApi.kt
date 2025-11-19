@@ -54,7 +54,7 @@ interface ItmoWidgetsApi {
     // region free sign
 
     @GET("/api/sport/free-sign/entry/my")
-    suspend fun mySportFreeSignEntries(@Query("limit") limit: Long?): ApiResponse<List<SportFreeSignEntry>>
+    suspend fun mySportFreeSignEntries(): ApiResponse<List<SportFreeSignEntry>>
 
     @POST("/api/sport/free-sign/entry/create")
     suspend fun createSportFreeSignEntry(@Body request: SportFreeSignRequest): ApiResponse<SportFreeSignEntry>
@@ -67,6 +67,7 @@ interface ItmoWidgetsApi {
 
     @GET("/api/sport/free-sign/entry/{id}/mark-satisfied")
     suspend fun markSportFreeSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
+
     // endregion free sign
 
     // region auto sign
@@ -75,7 +76,7 @@ interface ItmoWidgetsApi {
     suspend fun sportAutoSignLimits(): ApiResponse<SportAutoSignLimits>
 
     @GET("/api/sport/auto-sign/entry/my")
-    suspend fun mySportAutoSignEntries(@Query("limit") limit: Long?): ApiResponse<List<SportAutoSignEntry>>
+    suspend fun mySportAutoSignEntries(): ApiResponse<List<SportAutoSignEntry>>
 
     @POST("/api/sport/auto-sign/entry/create")
     suspend fun createSportAutoSignEntry(@Body request: SportAutoSignRequest): ApiResponse<SportAutoSignEntry>
