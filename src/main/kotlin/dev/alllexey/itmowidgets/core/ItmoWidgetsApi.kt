@@ -51,14 +51,45 @@ interface ItmoWidgetsApi {
     @DELETE("/api/sport/filter/{id}")
     suspend fun deleteSportFilter(@Path("id") id: Long): ApiResponse<String>
 
-    @GET("/api/sport/free-sign/all")
-    suspend fun allFreeSignEntries(): ApiResponse<List<SportFreeSignEntry>>
+    // region free sign
 
-    @POST("/api/sport/free-sign/create")
-    suspend fun createFreeSignEntry(@Body request: SportFreeSignRequest): ApiResponse<SportFreeSignEntry>
+    @GET("/api/sport/free-sign/entry/my")
+    suspend fun mySportFreeSignEntries(@Query("limit") limit: Long?): ApiResponse<List<SportFreeSignEntry>>
 
-    @DELETE("/api/sport/free-sign/{id}")
-    suspend fun deleteFreeSignEntry(@Path("id") id: Long): ApiResponse<String>
+    @POST("/api/sport/free-sign/entry/create")
+    suspend fun createSportFreeSignEntry(@Body request: SportFreeSignRequest): ApiResponse<SportFreeSignEntry>
+
+    @DELETE("/api/sport/free-sign/entry/{id}")
+    suspend fun deleteSportFreeSignEntry(@Path("id") id: Long): ApiResponse<String>
+
+    @GET("/api/sport/free-sign/queue/current")
+    suspend fun currentSportFreeSignQueues(): ApiResponse<List<SportFreeSignQueue>>
+
+    @GET("/api/sport/free-sign/entry/{id}/mark-satisfied")
+    suspend fun markSportFreeSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
+    // endregion free sign
+
+    // region auto sign
+
+    @GET("/api/sport/auto-sign/limits")
+    suspend fun sportAutoSignLimits(): ApiResponse<SportAutoSignLimits>
+
+    @GET("/api/sport/auto-sign/entry/my")
+    suspend fun mySportAutoSignEntries(@Query("limit") limit: Long?): ApiResponse<List<SportAutoSignEntry>>
+
+    @POST("/api/sport/auto-sign/entry/create")
+    suspend fun createSportAutoSignEntry(@Body request: SportAutoSignRequest): ApiResponse<SportAutoSignEntry>
+
+    @DELETE("/api/sport/auto-sign/entry/{id}")
+    suspend fun deleteSportAutoSignEntry(@Path("id") id: Long): ApiResponse<String>
+
+    @POST("/api/sport/auto-sign/queue/current")
+    suspend fun currentSportAutoSignQueues(): ApiResponse<List<SportAutoSignQueue>>
+
+    @GET("/api/sport/auto-sign/entry/{id}/mark-satisfied")
+    suspend fun markSportAutoSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
+
+    // endregion auto sign
 
     // endregion sport
 }

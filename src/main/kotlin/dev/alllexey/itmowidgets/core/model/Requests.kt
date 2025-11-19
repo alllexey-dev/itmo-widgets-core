@@ -20,3 +20,7 @@ data class SportFilterRequest(
 data class SportFreeSignRequest(
     val lessonId: Long
 )
+
+data class SportAutoSignRequest(
+    val prototypeLessonId: Long,
+)
