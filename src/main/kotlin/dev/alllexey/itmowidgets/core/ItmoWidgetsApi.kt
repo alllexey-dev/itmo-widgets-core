@@ -65,7 +65,7 @@ interface ItmoWidgetsApi {
     @GET("/api/sport/free-sign/queue/current")
     suspend fun currentSportFreeSignQueues(): ApiResponse<List<SportFreeSignQueue>>
 
-    @GET("/api/sport/free-sign/entry/{id}/mark-satisfied")
+    @POST("/api/sport/free-sign/entry/{id}/mark-satisfied")
     suspend fun markSportFreeSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
 
     // endregion free sign
@@ -87,7 +87,7 @@ interface ItmoWidgetsApi {
     @POST("/api/sport/auto-sign/queue/current")
     suspend fun currentSportAutoSignQueues(): ApiResponse<List<SportAutoSignQueue>>
 
-    @GET("/api/sport/auto-sign/entry/{id}/mark-satisfied")
+    @POST("/api/sport/auto-sign/entry/{id}/mark-satisfied")
     suspend fun markSportAutoSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
 
     // endregion auto sign
