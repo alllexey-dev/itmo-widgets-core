@@ -13,6 +13,8 @@ import dev.alllexey.itmowidgets.core.utils.ItmoWidgetsException
 import dev.alllexey.itmowidgets.core.utils.NetworkException
 import dev.alllexey.itmowidgets.core.utils.RuntimeStorage
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -61,6 +63,8 @@ open class ItmoWidgetsImpl(
 
     private val validTokensLock = Any()
 
+    private val validTokensMutex = Mutex()
+
     override fun getValidTokens(): TokenResponse {
         if (needsLogin() || needsRefresh()) {
             synchronized(validTokensLock) {
@@ -81,10 +85,17 @@ open class ItmoWidgetsImpl(
     }
 
     override suspend fun getValidTokensAsync(): Result<TokenResponse> {
-        if (needsLogin() || needsRefresh()) {
-            return refreshTokens()
+        if (!needsLogin() && !needsRefresh()) {
+            return Result.success(storage.toTokenResponse())
         }
-        return Result.success(storage.toTokenResponse())
+
+        return validTokensMutex.withLock {
+            if (!needsLogin() && !needsRefresh()) {
+                return@withLock Result.success(storage.toTokenResponse())
+            }
+
+            refreshTokens()
+        }
     }
 
     override suspend fun refreshTokens(): Result<TokenResponse> {
