@@ -61,19 +61,22 @@ open class ItmoWidgetsImpl(
 
     override fun storage() = storage
 
-    private val validTokensLock = Any()
-
     private val validTokensMutex = Mutex()
 
     override fun getValidTokens(): TokenResponse {
-        if (needsLogin() || needsRefresh()) {
-            synchronized(validTokensLock) {
-                if (needsLogin() || needsRefresh()) {
-                    return refreshTokensBlocking()
+        if (!needsLogin() && !needsRefresh()) {
+            return storage.toTokenResponse()
+        }
+
+        return runBlocking {
+            validTokensMutex.withLock {
+                if (!needsLogin() && !needsRefresh()) {
+                    storage.toTokenResponse()
+                } else {
+                    refreshTokensLocked().getOrThrow()
                 }
             }
         }
-        return storage.toTokenResponse()
     }
 
     override fun refreshTokensBlocking(): TokenResponse = runBlocking {
@@ -94,13 +97,21 @@ open class ItmoWidgetsImpl(
                 return@withLock Result.success(storage.toTokenResponse())
             }
 
-            refreshTokens()
+            refreshTokensLocked()
         }
     }
 
     override suspend fun refreshTokens(): Result<TokenResponse> {
+        return validTokensMutex.withLock {
+            refreshTokensLocked()
+        }
+    }
+
+    private suspend fun refreshTokensLocked(): Result<TokenResponse> {
         val refreshToken = storage.getRefreshToken()
-        if (refreshToken == null) return login()
+        if (refreshToken == null) {
+            return loginLocked()
+        }
 
         return try {
             val response = api.refreshToken(RefreshTokenRequest(refreshToken))
@@ -116,6 +127,12 @@ open class ItmoWidgetsImpl(
     }
 
     override suspend fun login(): Result<TokenResponse> {
+        return validTokensMutex.withLock {
+            loginLocked()
+        }
+    }
+
+    private suspend fun loginLocked(): Result<TokenResponse> {
         val myItmoTokens = try {
             myItmo.validTokens
         } catch (e: Exception) {
