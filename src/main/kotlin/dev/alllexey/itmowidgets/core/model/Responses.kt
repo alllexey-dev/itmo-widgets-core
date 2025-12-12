@@ -12,6 +12,7 @@ data class TokenResponse(
 )
 
 data class SessionResponse(val tokenId: UUID, val lastUsed: Instant)
+
 data class SportFilterResponse(
     val id: Long,
     val sectionIds: List<Long>,
@@ -41,16 +42,33 @@ data class BasicSportLessonData(
     val teacherFio: String,
 )
 
+sealed interface QueueEntry {
+    val id: Long
+    val position: Int
+    val total: Int
+    val status: QueueEntryStatus
+    val createdAt: OffsetDateTime
+    val notifiedAt: OffsetDateTime?
+
+    /**
+     * For FreeSign, this is the [SportFreeSignEntry.lessonData].
+     * For AutoSign, this is the [SportAutoSignEntry.prototypeLessonData].
+     */
+    val targetLesson: BasicSportLessonData
+}
+
 data class SportFreeSignEntry(
-    val id: Long,
+    override val id: Long,
     val lessonId: Long,
-    val position: Int,
-    val total: Int,
-    val status: QueueEntryStatus,
-    val createdAt: OffsetDateTime,
-    val notifiedAt: OffsetDateTime?,
+    override val position: Int,
+    override val total: Int,
+    override val status: QueueEntryStatus,
+    override val createdAt: OffsetDateTime,
+    override val notifiedAt: OffsetDateTime?,
     val lessonData: BasicSportLessonData,
-)
+) : QueueEntry {
+    override val targetLesson: BasicSportLessonData get() = lessonData
+}
 
 data class SportFreeSignQueue(
     val lessonId: Long,
@@ -58,17 +76,19 @@ data class SportFreeSignQueue(
 )
 
 data class SportAutoSignEntry(
-    val id: Long,
+    override val id: Long,
     val prototypeLessonId: Long,
     val realLessonId: Long?,
-    val position: Int,
-    val total: Int,
-    val status: QueueEntryStatus,
-    val createdAt: OffsetDateTime,
-    val notifiedAt: OffsetDateTime?,
+    override val position: Int,
+    override val total: Int,
+    override val status: QueueEntryStatus,
+    override val createdAt: OffsetDateTime,
+    override val notifiedAt: OffsetDateTime?,
     val prototypeLessonData: BasicSportLessonData,
     val realLessonData: BasicSportLessonData?,
-)
+) : QueueEntry {
+    override val targetLesson: BasicSportLessonData get() = prototypeLessonData
+}
 
 data class SportAutoSignQueue(
     val prototypeLessonId: Long,
