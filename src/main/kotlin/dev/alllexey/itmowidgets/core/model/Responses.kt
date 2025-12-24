@@ -66,6 +66,7 @@ data class SportFreeSignEntry(
     override val createdAt: OffsetDateTime,
     override val notifiedAt: OffsetDateTime?,
     val lessonData: BasicSportLessonData,
+    val forceSign: Boolean,
 ) : QueueEntry {
     override val targetLesson: BasicSportLessonData get() = lessonData
 }

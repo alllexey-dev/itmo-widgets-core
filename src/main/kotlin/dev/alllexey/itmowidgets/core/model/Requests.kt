@@ -18,7 +18,8 @@ data class SportFilterRequest(
 )
 
 data class SportFreeSignRequest(
-    val lessonId: Long
+    val lessonId: Long,
+    val forceSign: Boolean?,
 )
 
 data class SportAutoSignRequest(
