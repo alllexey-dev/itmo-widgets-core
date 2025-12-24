@@ -63,6 +63,8 @@ open class ItmoWidgetsImpl(
 
     private val validTokensMutex = Mutex()
 
+    private val loginMutex = Mutex()
+
     override fun getValidTokens(): TokenResponse {
         if (!needsLogin() && !needsRefresh()) {
             return storage.toTokenResponse()
@@ -110,7 +112,7 @@ open class ItmoWidgetsImpl(
     private suspend fun refreshTokensLocked(): Result<TokenResponse> {
         val refreshToken = storage.getRefreshToken()
         if (refreshToken == null) {
-            return loginLocked()
+            return login()
         }
 
         return try {
@@ -120,14 +122,18 @@ open class ItmoWidgetsImpl(
                 Result.success(it)
             } ?: Result.failure(AuthenticationException("Could not refresh backend tokens. Server response body is null."))
         } catch (e: IOException) {
-            Result.failure(NetworkException("Could not refresh tokens due to network error", e))
+            if (e.message?.contains("re-login performed") ?: false) {
+                Result.success(storage.toTokenResponse())
+            } else {
+                Result.failure(NetworkException("Could not refresh tokens due to network error", e))
+            }
         } catch (e: Exception) {
             Result.failure(ItmoWidgetsException("An unexpected error occurred during token refresh", e))
         }
     }
 
     override suspend fun login(): Result<TokenResponse> {
-        return validTokensMutex.withLock {
+        return loginMutex.withLock {
             loginLocked()
         }
     }
