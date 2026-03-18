@@ -4,13 +4,6 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
 
-data class TokenResponse(
-    val accessToken: String,
-    val accessTokenExpiresIn: Long,
-    val refreshToken: String,
-    val refreshTokenExpiresIn: Long
-)
-
 data class SessionResponse(val tokenId: UUID, val lastUsed: Instant)
 
 data class SportFilterResponse(
