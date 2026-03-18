@@ -5,12 +5,12 @@ import retrofit2.http.*
 
 interface ItmoWidgetsApi {
 
-    // region auth & sessions & devices
+    // region devices
 
     @POST("/api/device/register-device")
     suspend fun registerDevice(@Body request: RegisterDeviceRequest): ApiResponse<String>
 
-    // endregion auth & sessions & devices
+    // endregion devices
 
     // region app
 

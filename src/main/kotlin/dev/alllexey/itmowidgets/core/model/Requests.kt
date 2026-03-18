@@ -9,7 +9,7 @@ data class RegisterDeviceRequest(val fcmToken: String, val deviceName: String)
 
 data class SportFreeSignRequest(
     val lessonId: Long,
-    val forceSign: Boolean?,
+    val forceSign: Boolean,
 )
 
 data class SportAutoSignRequest(

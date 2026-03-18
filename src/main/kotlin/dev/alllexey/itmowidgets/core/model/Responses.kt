@@ -5,9 +5,13 @@ import java.time.OffsetDateTime
 enum class QueueEntryStatus {
     WAITING,
     NOTIFIED,
+    GAVE_UP_NOTIFYING,
     SATISFIED,
-    STOPPED_NOTIFYING,
-    EXPIRED
+    EXPIRED;
+
+    companion object {
+        val notifiableStatuses = listOf(WAITING, NOTIFIED)
+    }
 }
 
 data class BasicSportLessonData(
@@ -15,6 +19,7 @@ data class BasicSportLessonData(
     val sectionId: Long,
     val sectionName: String,
     val sectionLevel: Long,
+    val lessonLevel: Long,
     val buildingId: Long,
     val roomName: String,
     val dateStart: OffsetDateTime,
@@ -28,9 +33,16 @@ sealed interface QueueEntry {
     val id: Long
     val position: Int
     val total: Int
+    val isCancelled: Boolean
     val status: QueueEntryStatus
     val createdAt: OffsetDateTime
-    val notifiedAt: OffsetDateTime?
+    val firstNotifiedAt: OffsetDateTime?
+    val lastNotifiedAt: OffsetDateTime?
+    val cancelledAt: OffsetDateTime?
+    val satisfiedAt: OffsetDateTime?
+    val expiredAt: OffsetDateTime?
+    val notificationAttempts: Int
+    val maxNotificationAttempts: Int
 
     /**
      * For FreeSign, this is the [SportFreeSignEntry.lessonData].
@@ -44,9 +56,16 @@ data class SportFreeSignEntry(
     val lessonId: Long,
     override val position: Int,
     override val total: Int,
+    override val isCancelled: Boolean,
     override val status: QueueEntryStatus,
     override val createdAt: OffsetDateTime,
-    override val notifiedAt: OffsetDateTime?,
+    override val firstNotifiedAt: OffsetDateTime?,
+    override val lastNotifiedAt: OffsetDateTime?,
+    override val cancelledAt: OffsetDateTime?,
+    override val satisfiedAt: OffsetDateTime?,
+    override val expiredAt: OffsetDateTime?,
+    override val notificationAttempts: Int,
+    override val maxNotificationAttempts: Int,
     val lessonData: BasicSportLessonData,
     val forceSign: Boolean,
 ) : QueueEntry {
@@ -64,9 +83,16 @@ data class SportAutoSignEntry(
     val realLessonId: Long?,
     override val position: Int,
     override val total: Int,
+    override val isCancelled: Boolean,
     override val status: QueueEntryStatus,
     override val createdAt: OffsetDateTime,
-    override val notifiedAt: OffsetDateTime?,
+    override val firstNotifiedAt: OffsetDateTime?,
+    override val lastNotifiedAt: OffsetDateTime?,
+    override val cancelledAt: OffsetDateTime?,
+    override val satisfiedAt: OffsetDateTime?,
+    override val expiredAt: OffsetDateTime?,
+    override val notificationAttempts: Int,
+    override val maxNotificationAttempts: Int,
     val prototypeLessonData: BasicSportLessonData,
     val realLessonData: BasicSportLessonData?,
 ) : QueueEntry {
