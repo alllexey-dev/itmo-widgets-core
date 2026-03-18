@@ -1,6 +1,7 @@
 plugins {
     id("com.vanniktech.maven.publish") version "0.34.0"
     kotlin("jvm") version "2.1.21"
+    signing
 }
 
 group = "dev.alllexey"
@@ -8,6 +9,11 @@ version = "1.1.7"
 
 repositories {
     mavenCentral()
+}
+
+signing {
+    useGpgCmd()
+    sign(configurations.runtimeElements.get())
 }
 
 mavenPublishing {
