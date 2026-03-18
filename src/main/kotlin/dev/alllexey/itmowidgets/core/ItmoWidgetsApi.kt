@@ -8,13 +8,7 @@ interface ItmoWidgetsApi {
     // region auth & sessions & devices
 
     @POST("/api/device/register-device")
-    suspend fun registerToken(@Body request: RegisterDeviceRequest): ApiResponse<String>
-
-    @GET("/api/session/all")
-    suspend fun allSessions(): ApiResponse<List<SessionResponse>>
-
-    @DELETE("/api/session/all")
-    suspend fun endAllSessions(): ApiResponse<String>
+    suspend fun registerDevice(@Body request: RegisterDeviceRequest): ApiResponse<String>
 
     // endregion auth & sessions & devices
 
