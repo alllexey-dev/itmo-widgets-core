@@ -19,23 +19,6 @@ interface ItmoWidgetsApi {
 
     // endregion app
 
-    // region sport
-
-    @GET("/api/sport/filter/all")
-    suspend fun allSportFilters(): ApiResponse<List<SportFilterResponse>>
-
-    @DELETE("/api/sport/filter/all")
-    suspend fun deleteAllSportFilters(): ApiResponse<String>
-
-    @POST("/api/sport/filter/create")
-    suspend fun createSportFilter(@Body request: SportFilterRequest): ApiResponse<SportFilterResponse>
-
-    @POST("/api/sport/filter/{id}")
-    suspend fun editSportFilter(@Path("id") id: Long, @Body request: SportFilterRequest): ApiResponse<SportFilterResponse>
-
-    @DELETE("/api/sport/filter/{id}")
-    suspend fun deleteSportFilter(@Path("id") id: Long): ApiResponse<String>
-
     // region free sign
 
     @GET("/api/sport/free-sign/entry/my")

@@ -2,18 +2,11 @@ package dev.alllexey.itmowidgets.core.model
 
 import java.time.OffsetDateTime
 
-data class SportFilterResponse(
-    val id: Long,
-    val sectionIds: List<Long>,
-    val buildingIds: List<Long>,
-    val timeSlotIds: List<Long>,
-    val teacherIds: List<Long>,
-)
-
 enum class QueueEntryStatus {
     WAITING,
     NOTIFIED,
     SATISFIED,
+    STOPPED_NOTIFYING,
     EXPIRED
 }
 
