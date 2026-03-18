@@ -7,15 +7,6 @@ interface ItmoWidgetsApi {
 
     // region auth & sessions & devices
 
-    @POST("/api/auth/itmo-token")
-    suspend fun loginViaItmoToken(@Body request: ItmoTokenLoginRequest): ApiResponse<TokenResponse>
-
-    @POST("/api/auth/refresh")
-    suspend fun refreshToken(@Body request: RefreshTokenRequest): ApiResponse<TokenResponse>
-
-    @POST("/api/auth/logout")
-    suspend fun logout(@Body request: LogoutRequest): ApiResponse<String>
-
     @POST("/api/device/register-device")
     suspend fun registerToken(@Body request: RegisterDeviceRequest): ApiResponse<String>
 
