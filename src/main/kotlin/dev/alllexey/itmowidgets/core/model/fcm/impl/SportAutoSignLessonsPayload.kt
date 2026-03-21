@@ -1,9 +1,10 @@
 package dev.alllexey.itmowidgets.core.model.fcm.impl
 
+import dev.alllexey.itmowidgets.core.model.BasicSportLessonData
 import dev.alllexey.itmowidgets.core.model.fcm.FcmPayload
 
 data class SportAutoSignLessonsPayload(
-    val sportLessonIds: List<Long>
+    val sportLessons: List<BasicSportLessonData>
 ) : FcmPayload {
 
     override fun getType() = TYPE

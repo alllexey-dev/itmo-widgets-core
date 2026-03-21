@@ -45,8 +45,8 @@ sealed interface QueueEntry {
     val maxNotificationAttempts: Int
 
     /**
-     * For FreeSign, this is the [SportFreeSignEntry.lessonData].
-     * For AutoSign, this is the [SportAutoSignEntry.prototypeLessonData].
+     * For FreeSign, this is the real lesson.
+     * For AutoSign, this is the prototype lesson.
      */
     val targetLesson: BasicSportLessonData
 }
@@ -66,11 +66,9 @@ data class SportFreeSignEntry(
     override val expiredAt: OffsetDateTime?,
     override val notificationAttempts: Int,
     override val maxNotificationAttempts: Int,
-    val lessonData: BasicSportLessonData,
+    override val targetLesson: BasicSportLessonData,
     val forceSign: Boolean,
-) : QueueEntry {
-    override val targetLesson: BasicSportLessonData get() = lessonData
-}
+) : QueueEntry
 
 data class SportFreeSignQueue(
     val lessonId: Long,
@@ -93,11 +91,9 @@ data class SportAutoSignEntry(
     override val expiredAt: OffsetDateTime?,
     override val notificationAttempts: Int,
     override val maxNotificationAttempts: Int,
-    val prototypeLessonData: BasicSportLessonData,
+    override val targetLesson: BasicSportLessonData,
     val realLessonData: BasicSportLessonData?,
-) : QueueEntry {
-    override val targetLesson: BasicSportLessonData get() = prototypeLessonData
-}
+) : QueueEntry
 
 data class SportAutoSignQueue(
     val prototypeLessonId: Long,
