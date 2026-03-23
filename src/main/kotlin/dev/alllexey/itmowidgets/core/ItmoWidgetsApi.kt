@@ -27,14 +27,20 @@ interface ItmoWidgetsApi {
     @POST("/api/sport/free-sign/entry/create")
     suspend fun createSportFreeSignEntry(@Body request: SportFreeSignRequest): ApiResponse<SportFreeSignEntry>
 
-    @DELETE("/api/sport/free-sign/entry/{id}")
-    suspend fun deleteSportFreeSignEntry(@Path("id") id: Long): ApiResponse<String>
+    @POST("/api/sport/free-sign/entry/{id}/cancel")
+    suspend fun cancelSportFreeSignEntry(@Path("id") id: Long): ApiResponse<String>
+
+    @POST("/api/sport/free-sign/lesson/{lessonId}/cancel")
+    suspend fun cancelSportFreeSignEntryByLesson(@Path("lessonId") lessonId: Long): ApiResponse<String>
 
     @GET("/api/sport/free-sign/queue/current")
     suspend fun currentSportFreeSignQueues(): ApiResponse<List<SportFreeSignQueue>>
 
     @POST("/api/sport/free-sign/entry/{id}/mark-satisfied")
     suspend fun markSportFreeSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
+
+    @POST("/api/sport/free-sign/lesson/{lessonId}/mark-satisfied")
+    suspend fun markSportFreeSignEntrySatisfiedByLesson(@Path("lessonId") id: Long): ApiResponse<String>
 
     // endregion free sign
 
@@ -49,14 +55,22 @@ interface ItmoWidgetsApi {
     @POST("/api/sport/auto-sign/entry/create")
     suspend fun createSportAutoSignEntry(@Body request: SportAutoSignRequest): ApiResponse<SportAutoSignEntry>
 
-    @DELETE("/api/sport/auto-sign/entry/{id}")
-    suspend fun deleteSportAutoSignEntry(@Path("id") id: Long): ApiResponse<String>
+    @POST("/api/sport/auto-sign/entry/{id}/cancel")
+    suspend fun cancelSportAutoSignEntry(@Path("id") id: Long): ApiResponse<String>
+
+    // in this context "lesson" is the real lesson
+    @POST("/api/sport/auto-sign/lesson/{lessonId}/cancel")
+    suspend fun cancelSportAutoSignEntryByLesson(@Path("lessonId") lessonId: Long): ApiResponse<String>
 
     @POST("/api/sport/auto-sign/queue/current")
     suspend fun currentSportAutoSignQueues(): ApiResponse<List<SportAutoSignQueue>>
 
     @POST("/api/sport/auto-sign/entry/{id}/mark-satisfied")
     suspend fun markSportAutoSignEntrySatisfied(@Path("id") id: Long): ApiResponse<String>
+
+    // in this context "lesson" is the real lesson
+    @POST("/api/sport/auto-sign/lesson/{lessonId}/mark-satisfied")
+    suspend fun markSportAutoSignEntrySatisfiedByLesson(@Path("lessonId") lessonId: Long): ApiResponse<String>
 
     // endregion auto sign
 
