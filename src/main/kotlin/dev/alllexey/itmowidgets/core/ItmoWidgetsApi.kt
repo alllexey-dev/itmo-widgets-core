@@ -19,6 +19,21 @@ interface ItmoWidgetsApi {
 
     // endregion app
 
+    // region user
+
+    @GET("/users/me/settings")
+    suspend fun mySettings(): ApiResponse<UserSettings>
+
+    @PUT("/users/me/settings")
+    suspend fun updateMySettings(@Body userSettings: UserSettings): ApiResponse<UserSettings>
+
+    // endregion user
+
+    // region sport
+
+    @POST("/api/sport/sync")
+    suspend fun syncSportLessons(lessonIds: List<Long>): ApiResponse<String>
+
     // region free sign
 
     @GET("/api/sport/free-sign/entry/my")

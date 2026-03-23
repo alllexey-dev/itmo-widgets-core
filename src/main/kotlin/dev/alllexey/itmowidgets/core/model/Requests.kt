@@ -7,6 +7,8 @@ data class ErrorDetails(
 
 data class RegisterDeviceRequest(val fcmToken: String, val deviceName: String)
 
+// region sport
+
 data class SportFreeSignRequest(
     val lessonId: Long,
     val forceSign: Boolean,
@@ -15,3 +17,5 @@ data class SportFreeSignRequest(
 data class SportAutoSignRequest(
     val prototypeLessonId: Long,
 )
+
+// endregion sport

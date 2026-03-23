@@ -2,12 +2,25 @@ package dev.alllexey.itmowidgets.core.model
 
 import java.time.OffsetDateTime
 
+// region user
+
+data class UserSettings(
+    val sportLogging: Boolean,
+    val scheduleLogging: Boolean,
+)
+
+// endregion user
+
+// region sport
+
 enum class QueueEntryStatus {
     WAITING,
     NOTIFIED,
     GAVE_UP_NOTIFYING,
     SATISFIED,
     EXPIRED;
+
+    val isNotifiable get() = this == WAITING || this == GAVE_UP_NOTIFYING
 
     companion object {
         val notifiableStatuses = listOf(WAITING, NOTIFIED)
@@ -105,3 +118,5 @@ data class SportAutoSignLimits(
     val available: Int,
     val nextAvailableAt: OffsetDateTime,
 )
+
+// endregion sport
