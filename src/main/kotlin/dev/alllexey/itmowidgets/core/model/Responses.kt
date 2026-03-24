@@ -12,12 +12,12 @@ data class UserSettings(
 data class UserData(
     val isu: Int,
     val pictureUrl: String?,
-    val groupData: GroupData?,
-    val userSettings: UserSettings? // non-null for current user
+    val groups: List<GroupData>,
+    val settings: UserSettings? // non-null for current user
 )
 
 data class GroupData(
-    val groupName: String,
+    val name: String,
     val course: Int,
     val facultyShortName: String,
 )
