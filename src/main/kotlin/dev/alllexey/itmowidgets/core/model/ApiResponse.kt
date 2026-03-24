@@ -14,4 +14,9 @@ data class ApiResponse<T>(
             return ApiResponse(success = false, data = null, error = ErrorDetails(message, code))
         }
     }
+
+    data class ErrorDetails(
+        val message: String,
+        val code: String?
+    )
 }

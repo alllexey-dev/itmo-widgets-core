@@ -19,6 +19,25 @@ interface ItmoWidgetsApi {
 
     // endregion app
 
+    // region friend
+
+    @POST("/api/friends/add")
+    suspend fun addFriend(@Body friendRequest: FriendRequest): ApiResponse<String>
+
+    @POST("/api/friends/remove")
+    suspend fun removeFriend(@Body friendRequest: FriendRequest): ApiResponse<String>
+
+    @GET("/api/friends/get")
+    suspend fun myFriends(): ApiResponse<List<UserData>>
+
+    @GET("/api/friends/requests/incoming")
+    suspend fun incomingFriendRequests(): ApiResponse<List<UserData>>
+
+    @GET("/api/friends/requests/outgoing")
+    suspend fun outgoingFriendRequests(): ApiResponse<List<UserData>>
+
+    // endregion friend
+
     // region user
 
     @GET("/api/users/me/settings")
