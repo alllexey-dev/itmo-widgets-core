@@ -9,6 +9,19 @@ data class UserSettings(
     val scheduleLogging: Boolean,
 )
 
+data class UserData(
+    val isu: Int,
+    val pictureUrl: String?,
+    val groupData: GroupData?,
+    val userSettings: UserSettings? // non-null for current user
+)
+
+data class GroupData(
+    val groupName: String,
+    val course: Int,
+    val facultyShortName: String,
+)
+
 // endregion user
 
 // region sport

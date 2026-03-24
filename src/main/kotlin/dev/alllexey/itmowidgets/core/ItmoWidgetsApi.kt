@@ -30,6 +30,9 @@ interface ItmoWidgetsApi {
     @PUT("/api/users/me/id-token")
     suspend fun updateIdTokenData(@Body idTokenRequest: IdTokenRequest): ApiResponse<String>
 
+    @GET("/api/users/me/data")
+    suspend fun myUserData(): ApiResponse<UserData>
+
     // endregion user
 
     // region sport
