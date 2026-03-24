@@ -5,8 +5,8 @@ import java.time.OffsetDateTime
 // region user
 
 data class UserSettings(
-    val sportLogging: Boolean,
-    val scheduleLogging: Boolean,
+    val sportSharing: Boolean,
+    val scheduleSharing: Boolean,
 )
 
 data class UserData(
