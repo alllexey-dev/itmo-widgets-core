@@ -27,6 +27,9 @@ interface ItmoWidgetsApi {
     @PUT("/users/me/settings")
     suspend fun updateMySettings(@Body userSettings: UserSettings): ApiResponse<UserSettings>
 
+    @PUT("/users/id-token")
+    suspend fun updateIdTokenData(@Body idToken: String): ApiResponse<String>
+
     // endregion user
 
     // region sport
