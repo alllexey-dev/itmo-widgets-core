@@ -21,14 +21,14 @@ interface ItmoWidgetsApi {
 
     // region user
 
-    @GET("/users/me/settings")
+    @GET("/api/users/me/settings")
     suspend fun mySettings(): ApiResponse<UserSettings>
 
-    @PUT("/users/me/settings")
+    @PUT("/api/users/me/settings")
     suspend fun updateMySettings(@Body userSettings: UserSettings): ApiResponse<UserSettings>
 
-    @PUT("/users/id-token")
-    suspend fun updateIdTokenData(@Body idToken: String): ApiResponse<String>
+    @PUT("/api/users/me/id-token")
+    suspend fun updateIdTokenData(@Body idTokenRequest: IdTokenRequest): ApiResponse<String>
 
     // endregion user
 

@@ -7,6 +7,8 @@ data class ErrorDetails(
 
 data class RegisterDeviceRequest(val fcmToken: String, val deviceName: String)
 
+data class IdTokenRequest(val idToken: String)
+
 // region sport
 
 data class SportFreeSignRequest(
