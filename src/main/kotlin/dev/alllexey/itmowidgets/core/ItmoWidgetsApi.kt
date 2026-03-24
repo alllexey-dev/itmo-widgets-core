@@ -2,6 +2,7 @@ package dev.alllexey.itmowidgets.core
 
 import dev.alllexey.itmowidgets.core.model.*
 import retrofit2.http.*
+import java.time.LocalDate
 
 interface ItmoWidgetsApi {
 
@@ -18,6 +19,23 @@ interface ItmoWidgetsApi {
     suspend fun latestAppVersion(): ApiResponse<String>
 
     // endregion app
+
+    // region schedule
+
+    @POST("/api/schedule/lessons/sync")
+    suspend fun syncLessons(@Body lessonSyncRequest: LessonSyncRequest): ApiResponse<String>
+
+    @GET("/api/schedule/lessons/user/{isu}")
+    suspend fun userLessons(
+        @Path("isu") isu: Int,
+        @Query("from") from: LocalDate,
+        @Query("to") to: LocalDate
+    ): ApiResponse<Map<LocalDate, List<LessonData>>>
+
+    @GET("/api/schedule/lessons/{pairId}/users")
+    suspend fun usersByPairId(@Query("pairId") pairId: Long): ApiResponse<List<UserData>>
+
+    // endregion schedule
 
     // region friend
 

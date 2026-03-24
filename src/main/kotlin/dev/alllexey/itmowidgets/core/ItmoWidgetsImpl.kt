@@ -3,11 +3,15 @@ package dev.alllexey.itmowidgets.core
 import api.myitmo.MyItmo
 import com.google.gson.Gson
 import dev.alllexey.itmowidgets.core.utils.InstantTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.LocalDateTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.LocalTimeTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.TokenInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
 
 open class ItmoWidgetsImpl(
     val myItmo: MyItmo,
@@ -40,6 +44,8 @@ open class ItmoWidgetsImpl(
     override val gson: Gson by lazy {
         myItmo.gson.newBuilder()
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
+            .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
+            .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
             .create()
     }
 
