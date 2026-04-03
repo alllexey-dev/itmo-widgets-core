@@ -41,7 +41,7 @@ enum class QueueEntryStatus {
     }
 }
 
-data class BasicSportLessonData(
+data class SportLessonDto(
     val id: Long,
     val sectionId: Long,
     val sectionName: String,
@@ -98,7 +98,7 @@ sealed interface QueueEntry {
      * For FreeSign, this is the real lesson.
      * For AutoSign, this is the prototype lesson.
      */
-    val targetLesson: BasicSportLessonData
+    val targetLesson: SportLessonDto
 }
 
 data class SportFreeSignEntry(
@@ -116,7 +116,7 @@ data class SportFreeSignEntry(
     override val expiredAt: OffsetDateTime?,
     override val notificationAttempts: Int,
     override val maxNotificationAttempts: Int,
-    override val targetLesson: BasicSportLessonData,
+    override val targetLesson: SportLessonDto,
     val forceSign: Boolean,
 ) : QueueEntry
 
@@ -141,8 +141,8 @@ data class SportAutoSignEntry(
     override val expiredAt: OffsetDateTime?,
     override val notificationAttempts: Int,
     override val maxNotificationAttempts: Int,
-    override val targetLesson: BasicSportLessonData,
-    val realLessonData: BasicSportLessonData?,
+    override val targetLesson: SportLessonDto,
+    val realLessonData: SportLessonDto?,
 ) : QueueEntry
 
 data class SportAutoSignQueue(
