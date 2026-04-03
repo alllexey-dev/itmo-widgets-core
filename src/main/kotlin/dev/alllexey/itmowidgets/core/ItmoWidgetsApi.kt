@@ -30,7 +30,7 @@ interface ItmoWidgetsApi {
         @Path("isu") isu: Int,
         @Query("from") from: LocalDate,
         @Query("to") to: LocalDate
-    ): ApiResponse<Map<LocalDate, List<LessonData>>>
+    ): ApiResponse<List<LessonDto>>
 
     @GET("/api/schedule/lessons/{pairId}/users")
     suspend fun usersByPairId(@Query("pairId") pairId: Long): ApiResponse<List<UserData>>
