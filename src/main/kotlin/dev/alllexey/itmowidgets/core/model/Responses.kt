@@ -45,13 +45,35 @@ data class BasicSportLessonData(
     val id: Long,
     val sectionId: Long,
     val sectionName: String,
+    /**
+     * 1 - секции свободного посещения (или им подобные)
+     * 2 - спортивные секции с отбором
+     */
     val sectionLevel: Long,
+    /**
+     * 1 - секции свободного посещения (или им подобные)
+     * 2 - Секция (обучение)
+     * 3 - Секция (средний)
+     * 4 - Секция (сборная)
+     */
     val level: Long,
+    /**
+     * Имеет смысл при level = 1
+     * 1 - Открытое занятие
+     * 2 - Свободное посещение
+     * 5 - Задолженность
+     * 6 - Нормативы
+     * 7 - Экстернат
+     * 8 - Дополнительное
+     */
     val typeId: Long,
     val buildingId: Long,
     val roomName: String,
-    val dateStart: OffsetDateTime,
-    val dateEnd: OffsetDateTime,
+    /**
+     * Рекомендуется использовать start & end вместо TimeSlot
+     */
+    val start: OffsetDateTime,
+    val end: OffsetDateTime,
     val timeSlotId: Long,
     val teacherIsu: Long,
     val teacherFio: String,
