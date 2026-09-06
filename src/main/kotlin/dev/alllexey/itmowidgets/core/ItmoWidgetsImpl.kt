@@ -2,9 +2,16 @@ package dev.alllexey.itmowidgets.core
 
 import api.myitmo.MyItmo
 import com.google.gson.Gson
+import dev.alllexey.itmowidgets.core.model.SportAutoSignEntry
+import dev.alllexey.itmowidgets.core.model.SportAutoSignQueue
+import dev.alllexey.itmowidgets.core.model.SportFreeSignEntry
+import dev.alllexey.itmowidgets.core.model.SportFreeSignQueue
+import dev.alllexey.itmowidgets.core.model.SportQueue
+import dev.alllexey.itmowidgets.core.model.SportQueueEntry
 import dev.alllexey.itmowidgets.core.utils.InstantTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.LocalDateTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.LocalTimeTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.RuntimeTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.utils.TokenInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -42,10 +49,22 @@ open class ItmoWidgetsImpl(
     }
 
     override val gson: Gson by lazy {
+        val sportQueueEntryAdapter = RuntimeTypeAdapterFactory
+            .of(SportQueueEntry::class.java, "type", true)
+            .registerSubtype(SportFreeSignEntry::class.java, "free")
+            .registerSubtype(SportAutoSignEntry::class.java, "auto")
+
+        val sportQueueAdapter = RuntimeTypeAdapterFactory
+            .of(SportQueue::class.java, "type", true)
+            .registerSubtype(SportFreeSignQueue::class.java, "free")
+            .registerSubtype(SportAutoSignQueue::class.java, "auto")
+
         myItmo.gson.newBuilder()
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
             .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
+            .registerTypeAdapterFactory(sportQueueEntryAdapter)
+            .registerTypeAdapterFactory(sportQueueAdapter)
             .create()
     }
 

@@ -82,6 +82,9 @@ interface ItmoWidgetsApi {
     @POST("/api/sport/sign/sync")
     suspend fun syncSportLessons(@Body lessonIds: List<Long>): ApiResponse<String>
 
+    @GET("/api/sport/friends/sport-bookings")
+    suspend fun friendsSportBookings(): ApiResponse<FriendsSportBookingsResponse>
+
     // region free sign
 
     @GET("/api/sport/free-sign/entry/my")

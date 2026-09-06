@@ -79,7 +79,9 @@ data class SportLessonDto(
     val teacherFio: String,
 )
 
-sealed interface QueueEntry {
+sealed interface SportQueueEntry {
+    val type: String
+
     val id: Long
     val position: Int
     val total: Int
@@ -118,12 +120,9 @@ data class SportFreeSignEntry(
     override val maxNotificationAttempts: Int,
     override val targetLesson: SportLessonDto,
     val forceSign: Boolean,
-) : QueueEntry
-
-data class SportFreeSignQueue(
-    val lessonId: Long,
-    val total: Int,
-)
+) : SportQueueEntry {
+    override val type: String = "free"
+}
 
 data class SportAutoSignEntry(
     override val id: Long,
@@ -142,18 +141,46 @@ data class SportAutoSignEntry(
     override val notificationAttempts: Int,
     override val maxNotificationAttempts: Int,
     override val targetLesson: SportLessonDto,
-    val realLessonData: SportLessonDto?,
-) : QueueEntry
+    val realLesson: SportLessonDto?,
+) : SportQueueEntry {
+    override val type: String = "auto"
+}
+
+sealed interface SportQueue {
+    val type: String
+    val lessonId: Long
+    val total: Int
+}
+
+data class SportFreeSignQueue(
+    override val lessonId: Long,
+    override val total: Int,
+) : SportQueue {
+    override val type: String = "free"
+}
 
 data class SportAutoSignQueue(
-    val prototypeLessonId: Long,
-    val total: Int
-)
+    override val lessonId: Long,
+    override val total: Int,
+    val realLessonId: Long?
+) : SportQueue {
+    override val type: String = "auto"
+}
 
 data class SportAutoSignLimits(
     val limit: Int,
     val available: Int,
     val nextAvailableAt: OffsetDateTime,
+)
+
+data class FriendSportBooking(
+    val isu: Int,
+    val lessonId: Long,
+    val entry: SportQueueEntry? // null if already signed
+)
+
+data class FriendsSportBookingsResponse(
+    val bookings: List<FriendSportBooking>
 )
 
 // endregion sport
