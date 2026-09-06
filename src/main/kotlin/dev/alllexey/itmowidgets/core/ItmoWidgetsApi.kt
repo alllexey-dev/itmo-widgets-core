@@ -11,6 +11,11 @@ interface ItmoWidgetsApi {
     @POST("/api/device/register-device")
     suspend fun registerDevice(@Body request: RegisterDeviceRequest): ApiResponse<String>
 
+    @HTTP(method = "DELETE", path = "/api/device/current", hasBody = true)
+    suspend fun unregisterCurrentDevice(
+        @Body request: UnregisterDeviceRequest
+    ): ApiResponse<String>
+
     // endregion devices
 
     // region app

@@ -5,6 +5,8 @@ import java.time.LocalTime
 
 data class RegisterDeviceRequest(val fcmToken: String, val deviceName: String)
 
+data class UnregisterDeviceRequest(val fcmToken: String)
+
 data class IdTokenRequest(val idToken: String)
 
 data class FriendRequest(val isu: Int)
