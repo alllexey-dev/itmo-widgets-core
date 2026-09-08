@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.alllexey"
-version = "1.1.9"
+version = "1.2.0-SNAPSHOT"
 
 repositories {
     mavenCentral()

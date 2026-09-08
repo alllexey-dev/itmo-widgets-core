@@ -2,17 +2,23 @@ package dev.alllexey.itmowidgets.core
 
 import api.myitmo.MyItmo
 import com.google.gson.Gson
+import dev.alllexey.itmowidgets.core.model.AppVersionInfo
 import dev.alllexey.itmowidgets.core.model.SportAutoSignEntry
 import dev.alllexey.itmowidgets.core.model.SportAutoSignQueue
 import dev.alllexey.itmowidgets.core.model.SportFreeSignEntry
 import dev.alllexey.itmowidgets.core.model.SportFreeSignQueue
 import dev.alllexey.itmowidgets.core.model.SportQueue
 import dev.alllexey.itmowidgets.core.model.SportQueueEntry
+import dev.alllexey.itmowidgets.core.model.SharingVisibility
+import dev.alllexey.itmowidgets.core.model.UserPrivacySettings
 import dev.alllexey.itmowidgets.core.utils.InstantTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.AppVersionInfoTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.LocalDateTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.LocalTimeTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.RuntimeTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.utils.TokenInterceptor
+import dev.alllexey.itmowidgets.core.utils.SharingVisibilityTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.UserPrivacySettingsTypeAdapter
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -63,6 +69,9 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
             .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
+            .registerTypeAdapter(AppVersionInfo::class.java, AppVersionInfoTypeAdapter().nullSafe())
+            .registerTypeAdapter(SharingVisibility::class.java, SharingVisibilityTypeAdapter())
+            .registerTypeAdapter(UserPrivacySettings::class.java, UserPrivacySettingsTypeAdapter().nullSafe())
             .registerTypeAdapterFactory(sportQueueEntryAdapter)
             .registerTypeAdapterFactory(sportQueueAdapter)
             .create()

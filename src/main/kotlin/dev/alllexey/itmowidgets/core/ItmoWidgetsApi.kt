@@ -23,6 +23,10 @@ interface ItmoWidgetsApi {
     @GET("/api/app/version")
     suspend fun latestAppVersion(): ApiResponse<String>
 
+    /** Application release metadata; the legacy string endpoint remains unchanged. */
+    @GET("/api/app/version-info")
+    suspend fun appVersionInfo(): ApiResponse<AppVersionInfo>
+
     // endregion app
 
     // region schedule
@@ -38,7 +42,7 @@ interface ItmoWidgetsApi {
     ): ApiResponse<List<LessonDto>>
 
     @GET("/api/schedule/lessons/{pairId}/users")
-    suspend fun usersByPairId(@Query("pairId") pairId: Long): ApiResponse<List<UserData>>
+    suspend fun usersByPairId(@Path("pairId") pairId: Long): ApiResponse<List<UserData>>
 
     // endregion schedule
 
@@ -69,6 +73,12 @@ interface ItmoWidgetsApi {
     @PUT("/api/users/me/settings")
     suspend fun updateMySettings(@Body userSettings: UserSettings): ApiResponse<UserSettings>
 
+    @GET("/api/users/me/privacy")
+    suspend fun myPrivacySettings(): ApiResponse<UserPrivacySettings>
+
+    @PUT("/api/users/me/privacy")
+    suspend fun updateMyPrivacySettings(@Body privacySettings: UserPrivacySettings): ApiResponse<UserPrivacySettings>
+
     @PUT("/api/users/me/id-token")
     suspend fun updateIdTokenData(@Body idTokenRequest: IdTokenRequest): ApiResponse<String>
 
@@ -84,6 +94,9 @@ interface ItmoWidgetsApi {
 
     @GET("/api/sport/friends/sport-bookings")
     suspend fun friendsSportBookings(): ApiResponse<FriendsSportBookingsResponse>
+
+    @GET("/api/sport/users/{isu}/bookings")
+    suspend fun userSportBookings(@Path("isu") isu: Int): ApiResponse<UserSportBookingsResponse>
 
     // region free sign
 
