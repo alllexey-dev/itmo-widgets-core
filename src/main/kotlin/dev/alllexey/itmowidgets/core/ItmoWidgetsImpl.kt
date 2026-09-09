@@ -10,6 +10,7 @@ import dev.alllexey.itmowidgets.core.model.SportFreeSignQueue
 import dev.alllexey.itmowidgets.core.model.SportQueue
 import dev.alllexey.itmowidgets.core.model.SportQueueEntry
 import dev.alllexey.itmowidgets.core.model.SharingVisibility
+import dev.alllexey.itmowidgets.core.model.UserCapabilities
 import dev.alllexey.itmowidgets.core.model.UserPrivacySettings
 import dev.alllexey.itmowidgets.core.utils.InstantTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.AppVersionInfoTypeAdapter
@@ -18,6 +19,8 @@ import dev.alllexey.itmowidgets.core.utils.LocalTimeTypeAdapter
 import dev.alllexey.itmowidgets.core.utils.RuntimeTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.utils.TokenInterceptor
 import dev.alllexey.itmowidgets.core.utils.SharingVisibilityTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.UserCapabilitiesTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.UserDataTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.utils.UserPrivacySettingsTypeAdapter
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -71,6 +74,8 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
             .registerTypeAdapter(AppVersionInfo::class.java, AppVersionInfoTypeAdapter().nullSafe())
             .registerTypeAdapter(SharingVisibility::class.java, SharingVisibilityTypeAdapter())
+            .registerTypeAdapter(UserCapabilities::class.java, UserCapabilitiesTypeAdapter())
+            .registerTypeAdapterFactory(UserDataTypeAdapterFactory())
             .registerTypeAdapter(UserPrivacySettings::class.java, UserPrivacySettingsTypeAdapter().nullSafe())
             .registerTypeAdapterFactory(sportQueueEntryAdapter)
             .registerTypeAdapterFactory(sportQueueAdapter)

@@ -4,9 +4,10 @@ import java.time.OffsetDateTime
 
 // region user
 
-data class UserSettings(
-    val sportSharing: Boolean,
-    val scheduleSharing: Boolean,
+/** Access computed by Backend for the authenticated viewer, never the owner's privacy settings. */
+data class UserCapabilities(
+    val canViewSchedule: Boolean,
+    val canViewSport: Boolean,
 )
 
 data class UserData(
@@ -14,7 +15,7 @@ data class UserData(
     val name: String,
     val pictureUrl: String?,
     val groups: List<GroupData>,
-    val settings: UserSettings
+    val capabilities: UserCapabilities
 )
 
 data class GroupData(

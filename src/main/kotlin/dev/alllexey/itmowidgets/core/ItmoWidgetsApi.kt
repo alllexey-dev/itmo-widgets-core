@@ -67,12 +67,6 @@ interface ItmoWidgetsApi {
 
     // region user
 
-    @GET("/api/users/me/settings")
-    suspend fun mySettings(): ApiResponse<UserSettings>
-
-    @PUT("/api/users/me/settings")
-    suspend fun updateMySettings(@Body userSettings: UserSettings): ApiResponse<UserSettings>
-
     @GET("/api/users/me/privacy")
     suspend fun myPrivacySettings(): ApiResponse<UserPrivacySettings>
 

@@ -3,12 +3,15 @@ import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import dev.alllexey.itmowidgets.core.ItmoWidgetsApi
 import dev.alllexey.itmowidgets.core.ItmoWidgetsImpl
+import dev.alllexey.itmowidgets.core.model.GroupData
 import dev.alllexey.itmowidgets.core.model.SharingVisibility
 import dev.alllexey.itmowidgets.core.model.UserData
 import dev.alllexey.itmowidgets.core.model.UserPrivacySettings
-import dev.alllexey.itmowidgets.core.model.UserSettings
+import dev.alllexey.itmowidgets.core.model.UserCapabilities
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -16,6 +19,8 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import java.util.concurrent.TimeUnit
+import retrofit2.http.GET
+import retrofit2.http.PUT
 
 class PrivacyApiContractTest {
 
@@ -88,28 +93,28 @@ class PrivacyApiContractTest {
     }
 
     @Test
-    fun `legacy settings and user data retain boolean wire shape and round trip`() {
-        val settings = UserSettings(sportSharing = false, scheduleSharing = true)
-        val legacyJson = """{"sportSharing":false,"scheduleSharing":true}"""
+    fun `viewer capabilities and user data round trip without owner privacy settings`() {
+        val capabilities = UserCapabilities(canViewSchedule = true, canViewSport = false)
+        val capabilitiesJson = """{"canViewSchedule":true,"canViewSport":false}"""
 
-        assertEquals(JsonParser.parseString(legacyJson), JsonParser.parseString(gson.toJson(settings)))
-        assertEquals(settings, gson.fromJson(legacyJson, UserSettings::class.java))
+        assertEquals(JsonParser.parseString(capabilitiesJson), JsonParser.parseString(gson.toJson(capabilities)))
+        assertEquals(capabilities, gson.fromJson(capabilitiesJson, UserCapabilities::class.java))
 
         val user = UserData(
             isu = 123456,
             name = "Тестовый пользователь",
             pictureUrl = null,
             groups = emptyList(),
-            settings = settings
+            capabilities = capabilities
         )
         val encoded = gson.toJsonTree(user).asJsonObject
-        assertEquals(setOf("isu", "name", "groups", "settings"), encoded.keySet())
-        assertEquals(JsonParser.parseString(legacyJson), encoded.get("settings"))
+        assertEquals(setOf("isu", "name", "groups", "capabilities"), encoded.keySet())
+        assertEquals(JsonParser.parseString(capabilitiesJson), encoded.get("capabilities"))
         assertEquals(user, gson.fromJson(gson.toJson(user), UserData::class.java))
     }
 
     @Test
-    fun `privacy GET uses the dedicated route without changing legacy settings route`() = withServer { server, api ->
+    fun `privacy GET uses the dedicated audience route`() = withServer { server, api ->
         server.enqueue(response("""{"scheduleVisibility":"FRIENDS","sportVisibility":"ALL"}"""))
 
         val privacy = runBlocking { api.myPrivacySettings() }
@@ -120,12 +125,6 @@ class PrivacyApiContractTest {
         assertEquals("/api/users/me/privacy", privacyRequest.path)
         assertEquals(0L, privacyRequest.bodySize)
         assertNull(privacyRequest.getHeader("Authorization"))
-
-        server.enqueue(response("""{"sportSharing":false,"scheduleSharing":true}"""))
-        assertEquals(UserSettings(false, true), runBlocking { api.mySettings() }.data)
-        val legacyRequest = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
-        assertEquals("GET", legacyRequest.method)
-        assertEquals("/api/users/me/settings", legacyRequest.path)
     }
 
     @Test
@@ -170,6 +169,197 @@ class PrivacyApiContractTest {
         assertEquals("GET", request.method)
         assertEquals("/api/schedule/lessons/2147483648/users", request.path)
         assertNull(request.requestUrl?.query)
+    }
+
+    @Test
+    fun `all four viewer capability combinations round trip with exact booleans and no owner settings`() {
+        for (schedule in listOf(false, true)) {
+            for (sport in listOf(false, true)) {
+                val capabilities = UserCapabilities(schedule, sport)
+                val expectedJson = """{"canViewSchedule":$schedule,"canViewSport":$sport}"""
+                assertEquals(JsonParser.parseString(expectedJson), gson.toJsonTree(capabilities))
+                assertEquals(capabilities, gson.fromJson(expectedJson, UserCapabilities::class.java))
+
+                val profile = user(capabilities)
+                val encoded = gson.toJsonTree(profile).asJsonObject
+                assertEquals(setOf("isu", "name", "pictureUrl", "groups", "capabilities"), encoded.keySet())
+                assertEquals(JsonParser.parseString(expectedJson), encoded.get("capabilities"))
+                assertFalse(encoded.has("settings"))
+                assertFalse(encoded.has("scheduleVisibility"))
+                assertFalse(encoded.has("sportVisibility"))
+                assertEquals(profile, gson.fromJson(gson.toJson(profile), UserData::class.java))
+            }
+        }
+    }
+
+    @Test
+    fun `null and non boolean permissions are rejected for each capability field standalone and in profiles`() {
+        for (field in listOf("canViewSchedule", "canViewSport")) {
+            for (invalid in listOf("null", "0", "1", "\"true\"", "\"false\"", "\"TRUE\"", "{}", "[]")) {
+                val other = if (field == "canViewSchedule") "canViewSport" else "canViewSchedule"
+                val json = """{"$field":$invalid,"$other":false}"""
+                assertFailsWith<JsonParseException> { gson.fromJson(json, UserCapabilities::class.java) }
+                assertFailsWith<JsonParseException> { gson.fromJson(profileJson(json), UserData::class.java) }
+            }
+        }
+    }
+
+    @Test
+    fun `missing permission fields are rejected and never supplied as permissive defaults`() {
+        for (json in listOf("{}", """{"canViewSchedule":false}""", """{"canViewSport":true}""")) {
+            assertFailsWith<JsonParseException> { gson.fromJson(json, UserCapabilities::class.java) }
+            assertFailsWith<JsonParseException> { gson.fromJson(profileJson(json), UserData::class.java) }
+        }
+    }
+
+    @Test
+    fun `capabilities must be an object rather than null or a scalar`() {
+        for (json in listOf("null", "true", "false", "0", "[]", "\"capabilities\"")) {
+            assertFailsWith<JsonParseException> { gson.fromJson(json, UserCapabilities::class.java) }
+            assertFailsWith<JsonParseException> { gson.fromJson(profileJson(json), UserData::class.java) }
+        }
+    }
+
+    @Test
+    fun `duplicate permission fields are rejected including when the first value is false`() {
+        for (field in listOf("canViewSchedule", "canViewSport")) {
+            val other = if (field == "canViewSchedule") "canViewSport" else "canViewSchedule"
+            val json = """{"$field":false,"$other":false,"$field":true}"""
+            assertFailsWith<JsonParseException> { gson.fromJson(json, UserCapabilities::class.java) }
+            assertFailsWith<JsonParseException> { gson.fromJson(profileJson(json), UserData::class.java) }
+        }
+    }
+
+    @Test
+    fun `unknown response metadata is ignored without becoming a permission or retained owner setting`() {
+        val capabilitiesJson = """{
+            "canViewSchedule":false,"canViewSport":true,
+            "futureField":{"nested":[true,42,"new"]},
+            "sportVisibility":"ALL","scheduleVisibility":"ALL"
+        }"""
+        val expected = UserCapabilities(false, true)
+        assertEquals(expected, gson.fromJson(capabilitiesJson, UserCapabilities::class.java))
+        val profile = gson.fromJson(profileJson(capabilitiesJson), UserData::class.java)
+        assertEquals(expected, profile.capabilities)
+        assertEquals(
+            JsonParser.parseString("""{"canViewSchedule":false,"canViewSport":true}"""),
+            gson.toJsonTree(profile).asJsonObject.get("capabilities"),
+        )
+    }
+
+    @Test
+    fun `missing entire capabilities including legacy settings only profile fails closed`() {
+        val noCapabilities = JsonParser.parseString(profileJson(VALID_CAPABILITIES)).asJsonObject.apply {
+            remove("capabilities")
+        }
+        val oldProfile = noCapabilities.deepCopy().apply {
+            add("settings", JsonParser.parseString("""{"sportSharing":true,"scheduleSharing":true}"""))
+        }
+        for (json in listOf(noCapabilities.toString(), oldProfile.toString())) {
+            val failure = assertFailsWith<JsonParseException> { gson.fromJson(json, UserData::class.java) }
+            assertFalse(failure.message.orEmpty().contains("Synthetic user"))
+            assertFalse(failure.message.orEmpty().contains("sportSharing"))
+        }
+    }
+
+    @Test
+    fun `Core API has no legacy privacy route or methods while both version endpoints remain`() {
+        val methods = ItmoWidgetsApi::class.java.methods
+        val routes = methods.flatMap { method ->
+            listOfNotNull(method.getAnnotation(GET::class.java)?.value, method.getAnnotation(PUT::class.java)?.value)
+        }
+        assertFalse(methods.any { it.name == "mySettings" || it.name == "updateMySettings" })
+        assertFalse(routes.contains("/api/users/me/settings"))
+        assertEquals(2, routes.count { it == "/api/users/me/privacy" })
+        assertTrue(routes.contains("/api/app/version"))
+        assertTrue(routes.contains("/api/app/version-info"))
+    }
+
+    @Test
+    fun `own profile GET consumes capabilities from the unchanged profile route`() = withServer { server, api ->
+        val expected = user(UserCapabilities(true, true))
+        server.enqueue(response(gson.toJson(expected)))
+
+        val result = runBlocking { api.myUserData() }
+
+        assertEquals(expected, result.data)
+        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertEquals("GET", request.method)
+        assertEquals("/api/users/me/data", request.path)
+        assertEquals(0L, request.bodySize)
+        assertNull(request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun `friends route consumes every viewer permission combination without interpreting owner audiences`() = withServer { server, api ->
+        val profiles = listOf(false, true).flatMap { schedule ->
+            listOf(false, true).map { sport -> user(UserCapabilities(schedule, sport)) }
+        }
+        server.enqueue(response(gson.toJson(profiles)))
+
+        val result = runBlocking { api.myFriends() }
+
+        assertEquals(profiles, result.data)
+        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertEquals("GET", request.method)
+        assertEquals("/api/friends/get", request.path)
+        assertNull(request.requestUrl?.query)
+    }
+
+    @Test
+    fun `lesson participant profiles carry viewer capabilities through the typed list response`() = withServer { server, api ->
+        val expected = user(UserCapabilities(true, false))
+        server.enqueue(response(gson.toJson(listOf(expected))))
+
+        assertEquals(listOf(expected), runBlocking { api.usersByPairId(2147483648L) }.data)
+
+        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertEquals("GET", request.method)
+        assertEquals("/api/schedule/lessons/2147483648/users", request.path)
+        assertNull(request.requestUrl?.query)
+    }
+
+    @Test
+    fun `old profile wire shape is rejected through the real Retrofit converter`() = withServer { server, api ->
+        val oldProfile = JsonParser.parseString(profileJson(VALID_CAPABILITIES)).asJsonObject.apply {
+            remove("capabilities")
+            add("settings", JsonParser.parseString("""{"sportSharing":true,"scheduleSharing":true}"""))
+        }
+        server.enqueue(response(oldProfile.toString()))
+
+        assertFailsWith<JsonParseException> { runBlocking { api.myUserData() } }
+
+        assertEquals("/api/users/me/data", assertNotNull(server.takeRequest(5, TimeUnit.SECONDS)).path)
+    }
+
+    @Test
+    fun `failed profile response may still contain null data without creating a null capabilities user`() = withServer { server, api ->
+        server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody(
+            """{"success":false,"data":null,"error":{"message":"Access denied","code":"permission_denied"}}""",
+        ))
+
+        val result = runBlocking { api.myUserData() }
+
+        assertFalse(result.success)
+        assertNull(result.data)
+        assertEquals("permission_denied", result.error?.code)
+    }
+
+    private fun user(capabilities: UserCapabilities) = UserData(
+        isu = 123456,
+        name = "Synthetic user",
+        pictureUrl = "https://example.invalid/synthetic-avatar",
+        groups = listOf(GroupData("M3100", 1, "SYN")),
+        capabilities = capabilities,
+    )
+
+    private fun profileJson(capabilitiesJson: String) = """{
+        "isu":123456,"name":"Synthetic user","pictureUrl":null,"groups":[],
+        "capabilities":$capabilitiesJson
+    }"""
+
+    private companion object {
+        const val VALID_CAPABILITIES = """{"canViewSchedule":false,"canViewSport":true}"""
     }
 
     private fun response(data: String) = MockResponse()
