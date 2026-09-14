@@ -68,7 +68,8 @@ data class SportLessonDto(
      * 8 - Дополнительное
      */
     val typeId: Long,
-    val buildingId: Long,
+    /** Raw venue ID, not a filter category; null is valid for online lessons. */
+    val buildingId: Long?,
     val roomName: String,
     /**
      * Рекомендуется использовать start & end вместо TimeSlot

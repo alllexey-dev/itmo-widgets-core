@@ -70,6 +70,25 @@ class SportApiContractTest {
         assertEquals(source, restored)
     }
 
+    @Test
+    fun `raw external and nullable online venues round trip in both queue types`() {
+        for (building in listOf<Long?>(335L, 493L, null, -1L)) {
+            val venue = lesson.copy(buildingId = building, roomName = if (building == null || building == -1L) "Online" else "External venue address")
+            val entries = listOf(
+                (freeEntry() as SportFreeSignEntry).copy(targetLesson = venue),
+                (autoEntry() as SportAutoSignEntry).copy(targetLesson = venue, realLesson = venue),
+            )
+            for (source in entries) {
+                val json = gson.toJsonTree(source).asJsonObject
+                // Explicit null matches Spring/Jackson; absent null also occurs with Gson defaults.
+                json.getAsJsonObject("targetLesson").add("buildingId", gson.toJsonTree(building))
+                val restored = gson.fromJson(json, SportQueueEntry::class.java)
+                assertEquals(source, restored)
+                assertEquals(building, restored.targetLesson.buildingId)
+            }
+        }
+    }
+
     private fun freeEntry(): SportQueueEntry = SportFreeSignEntry(
         id = 1,
         lessonId = lesson.id,
