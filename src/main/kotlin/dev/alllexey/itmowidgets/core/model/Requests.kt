@@ -9,8 +9,6 @@ data class UnregisterDeviceRequest(val fcmToken: String)
 
 data class IdTokenRequest(val idToken: String)
 
-data class FriendRequest(val isu: Int)
-
 data class LessonSyncRequest(val lessons: List<LessonDto>, val from: LocalDate, val to: LocalDate)
 
 data class LessonDto(

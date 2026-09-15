@@ -1,6 +1,8 @@
 import api.myitmo.MyItmo
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
+import dev.alllexey.itmowidgets.core.model.social.UserProfile
+import dev.alllexey.itmowidgets.core.model.social.RelationshipState
 import dev.alllexey.itmowidgets.core.ItmoWidgetsApi
 import dev.alllexey.itmowidgets.core.ItmoWidgetsImpl
 import dev.alllexey.itmowidgets.core.model.GroupData
@@ -293,16 +295,16 @@ class PrivacyApiContractTest {
     @Test
     fun `friends route consumes every viewer permission combination without interpreting owner audiences`() = withServer { server, api ->
         val profiles = listOf(false, true).flatMap { schedule ->
-            listOf(false, true).map { sport -> user(UserCapabilities(schedule, sport)) }
+            listOf(false, true).map { sport -> UserProfile(user(UserCapabilities(schedule, sport)), RelationshipState.FRIENDS) }
         }
         server.enqueue(response(gson.toJson(profiles)))
 
-        val result = runBlocking { api.myFriends() }
+        val result = runBlocking { api.friends() }
 
         assertEquals(profiles, result.data)
         val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
         assertEquals("GET", request.method)
-        assertEquals("/api/friends/get", request.path)
+        assertEquals("/api/friends", request.path)
         assertNull(request.requestUrl?.query)
     }
 

@@ -8,6 +8,14 @@ import dev.alllexey.itmowidgets.core.model.SportAutoSignEntry
 import dev.alllexey.itmowidgets.core.model.SportFreeSignEntry
 import dev.alllexey.itmowidgets.core.model.SportLessonDto
 import dev.alllexey.itmowidgets.core.model.SportQueueEntry
+import dev.alllexey.itmowidgets.core.model.UserSportBookingsResponse
+import com.google.gson.JsonParseException
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlinx.coroutines.runBlocking
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import java.util.concurrent.TimeUnit
 import java.time.OffsetDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,6 +94,35 @@ class SportApiContractTest {
                 assertEquals(source, restored)
                 assertEquals(building, restored.targetLesson.buildingId)
             }
+        }
+    }
+
+    @Test
+    fun `target sport response decodes confirmed IDs and both active queue types through Retrofit`() {
+        MockWebServer().use { server ->
+            val client = object : ItmoWidgetsImpl(MyItmo(), server.url("/").toString()) {
+                override fun getValidToken(): String? = null
+            }
+            val source = UserSportBookingsResponse(listOf(2147483648L), listOf(freeEntry(), autoEntry()))
+            server.enqueue(MockResponse().setHeader("Content-Type", "application/json")
+                .setBody("""{"success":true,"data":${gson.toJson(source)},"error":null}"""))
+            val result = runBlocking { client.api.userSportBookings(123456) }
+            assertEquals(source, result.data)
+            assertIs<SportFreeSignEntry>(result.data?.entries?.get(0))
+            assertIs<SportAutoSignEntry>(result.data?.entries?.get(1))
+            val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+            assertEquals("GET", request.method)
+            assertEquals("/api/sport/users/123456/bookings", request.path)
+        }
+    }
+
+    @Test
+    fun `confirmed-only server safely defaults missing entries and malformed arrays are rejected`() {
+        assertEquals(UserSportBookingsResponse(listOf(100L)),
+            gson.fromJson("""{"lessonIds":[100]}""", UserSportBookingsResponse::class.java))
+        for (json in listOf("{}", """{"lessonIds":null}""", """{"lessonIds":[],"entries":null}""",
+            """{"lessonIds":[],"entries":{}}""", """{"lessonIds":[],"entries":[{"type":"unknown"}]}""")) {
+            assertFailsWith<JsonParseException> { gson.fromJson(json, UserSportBookingsResponse::class.java) }
         }
     }
 

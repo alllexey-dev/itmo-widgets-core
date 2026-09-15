@@ -26,9 +26,12 @@ data class UserPrivacySettings(
 )
 
 /**
- * Confirmed sport lesson IDs visible to the authenticated caller for the
- * requested user. This response contains no pending queues or predictions.
+ * Sport activity authorized by the owner's canViewSport capability.
+ * Confirmed current/upcoming IDs are separate from active free/auto-sign queues.
+ * Entries use the same polymorphic shape as FriendSportBooking.entry.
+ * Older servers that omit entries decode to an empty list.
  */
-data class UserSportBookingsResponse(
-    val lessonIds: List<Long>
+data class UserSportBookingsResponse @JvmOverloads constructor(
+    val lessonIds: List<Long>,
+    val entries: List<SportQueueEntry> = emptyList(),
 )

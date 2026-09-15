@@ -2,6 +2,10 @@ package dev.alllexey.itmowidgets.core
 
 import api.myitmo.MyItmo
 import com.google.gson.Gson
+import dev.alllexey.itmowidgets.core.model.social.RelationshipState
+import dev.alllexey.itmowidgets.core.utils.RelationshipStateTypeAdapter
+import dev.alllexey.itmowidgets.core.utils.UserProfileTypeAdapterFactory
+import dev.alllexey.itmowidgets.core.utils.UserSportBookingsTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.model.AppVersionInfo
 import dev.alllexey.itmowidgets.core.model.SportAutoSignEntry
 import dev.alllexey.itmowidgets.core.model.SportAutoSignQueue
@@ -76,6 +80,9 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(SharingVisibility::class.java, SharingVisibilityTypeAdapter())
             .registerTypeAdapter(UserCapabilities::class.java, UserCapabilitiesTypeAdapter())
             .registerTypeAdapterFactory(UserDataTypeAdapterFactory())
+            .registerTypeAdapter(RelationshipState::class.java, RelationshipStateTypeAdapter())
+            .registerTypeAdapterFactory(UserProfileTypeAdapterFactory())
+            .registerTypeAdapterFactory(UserSportBookingsTypeAdapterFactory())
             .registerTypeAdapter(UserPrivacySettings::class.java, UserPrivacySettingsTypeAdapter().nullSafe())
             .registerTypeAdapterFactory(sportQueueEntryAdapter)
             .registerTypeAdapterFactory(sportQueueAdapter)

@@ -1,6 +1,9 @@
 package dev.alllexey.itmowidgets.core
 
 import dev.alllexey.itmowidgets.core.model.*
+import dev.alllexey.itmowidgets.core.model.social.UserProfile
+import dev.alllexey.itmowidgets.core.model.social.UserLookupRequest
+import dev.alllexey.itmowidgets.core.model.social.UserLookupResponse
 import retrofit2.http.*
 import java.time.LocalDate
 
@@ -48,24 +51,40 @@ interface ItmoWidgetsApi {
 
     // region friend
 
-    @POST("/api/friends/add")
-    suspend fun addFriend(@Body friendRequest: FriendRequest): ApiResponse<String>
+    /** A crossed request accepts the incoming request. Successful actions return fresh capabilities. */
+    @POST("/api/friends/{isu}/request")
+    suspend fun sendFriendRequest(@Path("isu") isu: Int): ApiResponse<UserProfile>
 
-    @POST("/api/friends/remove")
-    suspend fun removeFriend(@Body friendRequest: FriendRequest): ApiResponse<String>
+    @POST("/api/friends/{isu}/accept")
+    suspend fun acceptFriendRequest(@Path("isu") isu: Int): ApiResponse<UserProfile>
 
-    @GET("/api/friends/get")
-    suspend fun myFriends(): ApiResponse<List<UserData>>
+    @POST("/api/friends/{isu}/reject")
+    suspend fun rejectFriendRequest(@Path("isu") isu: Int): ApiResponse<UserProfile>
+
+    @POST("/api/friends/{isu}/cancel")
+    suspend fun cancelFriendRequest(@Path("isu") isu: Int): ApiResponse<UserProfile>
+
+    @DELETE("/api/friends/{isu}")
+    suspend fun removeFriend(@Path("isu") isu: Int): ApiResponse<UserProfile>
+
+    @GET("/api/friends")
+    suspend fun friends(): ApiResponse<List<UserProfile>>
 
     @GET("/api/friends/requests/incoming")
-    suspend fun incomingFriendRequests(): ApiResponse<List<UserData>>
+    suspend fun incomingFriendRequests(): ApiResponse<List<UserProfile>>
 
     @GET("/api/friends/requests/outgoing")
-    suspend fun outgoingFriendRequests(): ApiResponse<List<UserData>>
+    suspend fun outgoingFriendRequests(): ApiResponse<List<UserProfile>>
 
     // endregion friend
 
     // region user
+
+    @GET("/api/users/{isu}")
+    suspend fun userProfile(@Path("isu") isu: Int): ApiResponse<UserProfile>
+
+    @POST("/api/users/lookup")
+    suspend fun lookupUsers(@Body request: UserLookupRequest): ApiResponse<UserLookupResponse>
 
     @GET("/api/users/me/privacy")
     suspend fun myPrivacySettings(): ApiResponse<UserPrivacySettings>
