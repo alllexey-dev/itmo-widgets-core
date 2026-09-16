@@ -154,8 +154,19 @@ class SocialApiContractTest {
         for (route in listOf("/api/friends/add", "/api/friends/remove", "/api/friends/get")) assertFalse(route in routes)
     }
 
+    @Test
+    fun `target friends use exact ISU path and retain viewer relative relationships`() = withServer { server, api ->
+        server.enqueue(response("[${profileJson("NONE")}]"))
+        assertEquals(listOf(UserProfile(identity, RelationshipState.NONE)), runBlocking { api.userFriends(456789) }.data)
+        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertEquals("GET", request.method)
+        assertEquals("/api/users/456789/friends", request.path)
+        assertEquals(0L, request.bodySize)
+        assertNull(request.requestUrl?.query)
+    }
+
     private fun profileJson(state: String) =
-        """{"user":{"isu":123456,"name":"Synthetic user","pictureUrl":null,"groups":[],"capabilities":{"canViewSchedule":false,"canViewSport":true}},"relationship":"$state"}"""
+        """{"user":{"isu":123456,"name":"Synthetic user","pictureUrl":null,"groups":[],"capabilities":{"canViewSchedule":false,"canViewSport":true,"canViewFriends":false}},"relationship":"$state"}"""
 
     private fun response(data: String) = MockResponse().setHeader("Content-Type", "application/json")
         .setBody("""{"success":true,"data":$data,"error":null}""")

@@ -19,12 +19,18 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
   malformed ones fail decoding rather than granting access.
 - `UserProfile` and `RelationshipState`: both fields required; an unknown
   relationship string fails.
-- `UserPrivacySettings` and `SharingVisibility`: both audiences required.
+- `UserPrivacySettings` and `SharingVisibility`: all three audiences required.
 - `UserSportBookingsResponse`: `lessonIds` required; missing `entries` decode
   to an empty list for older servers.
 - `SportQueueEntry` and `SportQueue`: polymorphic on `type` (`free` / `auto`).
 - `FriendshipEventPayload`: event, actor and time required.
 - `OffsetDateTime` through the shared adapter.
+
+`friendsVisibility` defaults to ALL only for explicitly constructed settings;
+wire responses must include it. `canViewFriends` is required on the wire and
+legacy two-argument constructors default it to false. Consume these coordinated
+snapshots only with Backend V3; older privacy PUTs fail closed rather than
+resetting a saved audience.
 
 A consumer never has to null-check a required field; if it decoded, it is complete.
 
@@ -43,7 +49,7 @@ live in `model/fcm/impl`.
 | App | `latestAppVersion`, `appVersionInfo` |
 | Schedule | `syncLessons`, `userLessons`, `usersByPairId` |
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
-| Users | `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData` |
+| Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
 
 Semantics of each route are documented in the Backend repository under

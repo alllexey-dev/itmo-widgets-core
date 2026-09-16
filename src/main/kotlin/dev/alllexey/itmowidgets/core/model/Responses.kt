@@ -5,9 +5,10 @@ import java.time.OffsetDateTime
 // region user
 
 /** Access computed by Backend for the authenticated viewer, never the owner's privacy settings. */
-data class UserCapabilities(
+data class UserCapabilities @JvmOverloads constructor(
     val canViewSchedule: Boolean,
     val canViewSport: Boolean,
+    val canViewFriends: Boolean = false,
 )
 
 data class UserData(

@@ -8,7 +8,7 @@ enum class SharingVisibility {
     /** Any authenticated application user. */
     ALL,
 
-    /** Mutual friends only; the server default for a new account. */
+    /** Mutual friends only; the server default for schedule and sport. */
     FRIENDS,
 
     /** The owner only. */
@@ -17,12 +17,13 @@ enum class SharingVisibility {
 
 /**
  * Own settings returned by `/api/users/me/privacy`; never exposed for another
- * user. Both fields are required on GET and PUT. Missing or unknown wire values
+ * user. All three fields are required on GET and PUT. Missing or unknown wire values
  * are errors, not an implicit request to broaden the audience to FRIENDS.
  */
-data class UserPrivacySettings(
+data class UserPrivacySettings @JvmOverloads constructor(
     val scheduleVisibility: SharingVisibility,
-    val sportVisibility: SharingVisibility
+    val sportVisibility: SharingVisibility,
+    val friendsVisibility: SharingVisibility = SharingVisibility.ALL
 )
 
 /**

@@ -14,6 +14,7 @@ class UserCapabilitiesTypeAdapter : TypeAdapter<UserCapabilities>() {
         out.beginObject()
         out.name("canViewSchedule").value(value.canViewSchedule)
         out.name("canViewSport").value(value.canViewSport)
+        out.name("canViewFriends").value(value.canViewFriends)
         out.endObject()
     }
 
@@ -23,6 +24,7 @@ class UserCapabilitiesTypeAdapter : TypeAdapter<UserCapabilities>() {
         }
         var schedule: Boolean? = null
         var sport: Boolean? = null
+        var friends: Boolean? = null
         reader.beginObject()
         while (reader.hasNext()) {
             when (reader.nextName()) {
@@ -34,6 +36,10 @@ class UserCapabilitiesTypeAdapter : TypeAdapter<UserCapabilities>() {
                     if (sport != null) throw JsonParseException("Duplicate canViewSport")
                     sport = readBoolean(reader)
                 }
+                "canViewFriends" -> {
+                    if (friends != null) throw JsonParseException("Duplicate canViewFriends")
+                    friends = readBoolean(reader)
+                }
                 else -> reader.skipValue()
             }
         }
@@ -41,6 +47,7 @@ class UserCapabilitiesTypeAdapter : TypeAdapter<UserCapabilities>() {
         return UserCapabilities(
             canViewSchedule = schedule ?: throw JsonParseException("Missing canViewSchedule"),
             canViewSport = sport ?: throw JsonParseException("Missing canViewSport"),
+            canViewFriends = friends ?: throw JsonParseException("Missing canViewFriends"),
         )
     }
 

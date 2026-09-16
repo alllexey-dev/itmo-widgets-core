@@ -36,7 +36,7 @@ class PrivacyApiContractTest {
                 val json = gson.toJson(settings)
 
                 assertEquals(
-                    JsonParser.parseString("""{"scheduleVisibility":"${schedule.name}","sportVisibility":"${sport.name}"}"""),
+                    JsonParser.parseString("""{"scheduleVisibility":"${schedule.name}","sportVisibility":"${sport.name}","friendsVisibility":"ALL"}"""),
                     JsonParser.parseString(json)
                 )
                 assertEquals(settings, gson.fromJson(json, UserPrivacySettings::class.java))
@@ -84,7 +84,7 @@ class PrivacyApiContractTest {
     fun `unknown additional response fields do not break valid privacy settings`() {
         val json = """{
             "scheduleVisibility":"ALL",
-            "sportVisibility":"NOBODY",
+            "sportVisibility":"NOBODY","friendsVisibility":"ALL",
             "futureField":{"nested":[true,42,"new"]}
         }"""
 
@@ -97,7 +97,7 @@ class PrivacyApiContractTest {
     @Test
     fun `viewer capabilities and user data round trip without owner privacy settings`() {
         val capabilities = UserCapabilities(canViewSchedule = true, canViewSport = false)
-        val capabilitiesJson = """{"canViewSchedule":true,"canViewSport":false}"""
+        val capabilitiesJson = """{"canViewSchedule":true,"canViewSport":false,"canViewFriends":false}"""
 
         assertEquals(JsonParser.parseString(capabilitiesJson), JsonParser.parseString(gson.toJson(capabilities)))
         assertEquals(capabilities, gson.fromJson(capabilitiesJson, UserCapabilities::class.java))
@@ -117,7 +117,7 @@ class PrivacyApiContractTest {
 
     @Test
     fun `privacy GET uses the dedicated audience route`() = withServer { server, api ->
-        server.enqueue(response("""{"scheduleVisibility":"FRIENDS","sportVisibility":"ALL"}"""))
+        server.enqueue(response("""{"scheduleVisibility":"FRIENDS","sportVisibility":"ALL","friendsVisibility":"ALL"}"""))
 
         val privacy = runBlocking { api.myPrivacySettings() }
 
@@ -141,7 +141,7 @@ class PrivacyApiContractTest {
         assertEquals("PUT", request.method)
         assertEquals("/api/users/me/privacy", request.path)
         assertEquals(
-            JsonParser.parseString("""{"scheduleVisibility":"ALL","sportVisibility":"NOBODY"}"""),
+            JsonParser.parseString("""{"scheduleVisibility":"ALL","sportVisibility":"NOBODY","friendsVisibility":"ALL"}"""),
             JsonParser.parseString(request.body.readUtf8())
         )
         assertNull(request.getHeader("Authorization"))
@@ -178,7 +178,7 @@ class PrivacyApiContractTest {
         for (schedule in listOf(false, true)) {
             for (sport in listOf(false, true)) {
                 val capabilities = UserCapabilities(schedule, sport)
-                val expectedJson = """{"canViewSchedule":$schedule,"canViewSport":$sport}"""
+                val expectedJson = """{"canViewSchedule":$schedule,"canViewSport":$sport,"canViewFriends":false}"""
                 assertEquals(JsonParser.parseString(expectedJson), gson.toJsonTree(capabilities))
                 assertEquals(capabilities, gson.fromJson(expectedJson, UserCapabilities::class.java))
 
@@ -235,7 +235,7 @@ class PrivacyApiContractTest {
     @Test
     fun `unknown response metadata is ignored without becoming a permission or retained owner setting`() {
         val capabilitiesJson = """{
-            "canViewSchedule":false,"canViewSport":true,
+            "canViewSchedule":false,"canViewSport":true,"canViewFriends":false,
             "futureField":{"nested":[true,42,"new"]},
             "sportVisibility":"ALL","scheduleVisibility":"ALL"
         }"""
@@ -244,7 +244,7 @@ class PrivacyApiContractTest {
         val profile = gson.fromJson(profileJson(capabilitiesJson), UserData::class.java)
         assertEquals(expected, profile.capabilities)
         assertEquals(
-            JsonParser.parseString("""{"canViewSchedule":false,"canViewSport":true}"""),
+            JsonParser.parseString("""{"canViewSchedule":false,"canViewSport":true,"canViewFriends":false}"""),
             gson.toJsonTree(profile).asJsonObject.get("capabilities"),
         )
     }
@@ -347,6 +347,39 @@ class PrivacyApiContractTest {
         assertEquals("permission_denied", result.error?.code)
     }
 
+    @Test
+    fun `friends audience and capability round trip for every value`() {
+        for (schedule in SharingVisibility.entries) for (sport in SharingVisibility.entries) {
+            for (friends in SharingVisibility.entries) {
+                val settings = UserPrivacySettings(schedule, sport, friends)
+                val encoded = gson.toJsonTree(settings).asJsonObject
+                assertEquals(setOf("scheduleVisibility", "sportVisibility", "friendsVisibility"), encoded.keySet())
+                assertEquals(friends.name, encoded["friendsVisibility"].asString)
+                assertEquals(settings, gson.fromJson(encoded, UserPrivacySettings::class.java))
+            }
+        }
+        for (schedule in listOf(false, true)) for (sport in listOf(false, true)) for (friends in listOf(false, true)) {
+            val capabilities = UserCapabilities(schedule, sport, friends)
+            assertEquals(capabilities, gson.fromJson(gson.toJson(capabilities), UserCapabilities::class.java))
+        }
+    }
+
+    @Test
+    fun `new friends fields fail closed when missing null malformed or duplicated`() {
+        for (field in listOf("", ",\"friendsVisibility\":null", ",\"friendsVisibility\":\"UNKNOWN\"",
+            ",\"friendsVisibility\":true", ",\"friendsVisibility\":\"ALL\",\"friendsVisibility\":\"NOBODY\"")) {
+            assertFailsWith<JsonParseException> {
+                gson.fromJson("""{"scheduleVisibility":"ALL","sportVisibility":"ALL"$field}""", UserPrivacySettings::class.java)
+            }
+        }
+        for (field in listOf("", ",\"canViewFriends\":null", ",\"canViewFriends\":\"true\"",
+            ",\"canViewFriends\":1", ",\"canViewFriends\":false,\"canViewFriends\":true")) {
+            assertFailsWith<JsonParseException> {
+                gson.fromJson("""{"canViewSchedule":true,"canViewSport":true$field}""", UserCapabilities::class.java)
+            }
+        }
+    }
+
     private fun user(capabilities: UserCapabilities) = UserData(
         isu = 123456,
         name = "Synthetic user",
@@ -361,7 +394,7 @@ class PrivacyApiContractTest {
     }"""
 
     private companion object {
-        const val VALID_CAPABILITIES = """{"canViewSchedule":false,"canViewSport":true}"""
+        const val VALID_CAPABILITIES = """{"canViewSchedule":false,"canViewSport":true,"canViewFriends":false}"""
     }
 
     private fun response(data: String) = MockResponse()

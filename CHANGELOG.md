@@ -2,6 +2,9 @@
 
 ## 1.2.0-SNAPSHOT (unreleased)
 
+- `userFriends(isu)`, required `canViewFriends` and `friendsVisibility` wire fields;
+  strict decoding and independent friends privacy (server default ALL).
+
 - `FriendshipEventPayload` (`FRIENDSHIP_EVENT_PAYLOAD`) with `REQUEST_RECEIVED`
   and `REQUEST_ACCEPTED`, strict decoding.
 - Friendship actions by ISU path returning `UserProfile`; `friends()`,

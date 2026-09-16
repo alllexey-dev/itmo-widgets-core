@@ -42,6 +42,8 @@ class UserPrivacySettingsTypeAdapter : TypeAdapter<UserPrivacySettings>() {
         visibilityAdapter.write(out, value.scheduleVisibility)
         out.name("sportVisibility")
         visibilityAdapter.write(out, value.sportVisibility)
+        out.name("friendsVisibility")
+        visibilityAdapter.write(out, value.friendsVisibility)
         out.endObject()
     }
 
@@ -51,6 +53,7 @@ class UserPrivacySettingsTypeAdapter : TypeAdapter<UserPrivacySettings>() {
         }
         var schedule: SharingVisibility? = null
         var sport: SharingVisibility? = null
+        var friends: SharingVisibility? = null
         reader.beginObject()
         while (reader.hasNext()) {
             when (reader.nextName()) {
@@ -62,13 +65,18 @@ class UserPrivacySettingsTypeAdapter : TypeAdapter<UserPrivacySettings>() {
                     if (sport != null) throw JsonParseException("Duplicate sportVisibility")
                     sport = visibilityAdapter.read(reader)
                 }
+                "friendsVisibility" -> {
+                    if (friends != null) throw JsonParseException("Duplicate friendsVisibility")
+                    friends = visibilityAdapter.read(reader)
+                }
                 else -> reader.skipValue()
             }
         }
         reader.endObject()
         return UserPrivacySettings(
             scheduleVisibility = schedule ?: throw JsonParseException("Missing scheduleVisibility"),
-            sportVisibility = sport ?: throw JsonParseException("Missing sportVisibility")
+            sportVisibility = sport ?: throw JsonParseException("Missing sportVisibility"),
+            friendsVisibility = friends ?: throw JsonParseException("Missing friendsVisibility")
         )
     }
 }

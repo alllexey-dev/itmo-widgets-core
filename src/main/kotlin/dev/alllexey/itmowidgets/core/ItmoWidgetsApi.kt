@@ -83,6 +83,9 @@ interface ItmoWidgetsApi {
     @GET("/api/users/{isu}")
     suspend fun userProfile(@Path("isu") isu: Int): ApiResponse<UserProfile>
 
+    @GET("/api/users/{isu}/friends")
+    suspend fun userFriends(@Path("isu") isu: Int): ApiResponse<List<UserProfile>>
+
     @POST("/api/users/lookup")
     suspend fun lookupUsers(@Body request: UserLookupRequest): ApiResponse<UserLookupResponse>
 
