@@ -22,7 +22,7 @@ or application state.
 - Every public API change ships with a JSON round-trip test and a MockWebServer
   contract test.
 - Binary and source compatibility are preserved unless a coordinated version
-  bump allows a break. The version stays `1.2.0-SNAPSHOT` until Android 2.1.
+  bump allows a break. Released versions are tagged; the next cycle starts as a `-SNAPSHOT` again.
 - `publishToMavenLocal` is coordinated development, not a release; Maven Central
   publication happens only on explicit request.
 

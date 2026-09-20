@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0-SNAPSHOT (unreleased)
+## 1.2.0 — 2026-09-21
 
 - `friendsOnLesson(pairId, date)` → `List<UserProfile>`: the viewer's accepted
   friends on one lesson occurrence (`GET /api/schedule/lessons/{pairId}/friends?date=`).
