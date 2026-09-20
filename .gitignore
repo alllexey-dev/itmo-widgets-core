@@ -43,3 +43,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+.idea/AndroidProjectSystem.xml
+.idea/yatool.xml
+.idea/discord.xml
+.idea/workspace.xml
