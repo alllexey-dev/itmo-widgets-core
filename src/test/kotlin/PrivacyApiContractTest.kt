@@ -162,18 +162,6 @@ class PrivacyApiContractTest {
     }
 
     @Test
-    fun `users by pair resolves the path placeholder without a duplicate query parameter`() = withServer { server, api ->
-        server.enqueue(response("[]"))
-
-        assertEquals(emptyList(), runBlocking { api.usersByPairId(2_147_483_648L) }.data)
-
-        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
-        assertEquals("GET", request.method)
-        assertEquals("/api/schedule/lessons/2147483648/users", request.path)
-        assertNull(request.requestUrl?.query)
-    }
-
-    @Test
     fun `all four viewer capability combinations round trip with exact booleans and no owner settings`() {
         for (schedule in listOf(false, true)) {
             for (sport in listOf(false, true)) {
@@ -305,19 +293,6 @@ class PrivacyApiContractTest {
         val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
         assertEquals("GET", request.method)
         assertEquals("/api/friends", request.path)
-        assertNull(request.requestUrl?.query)
-    }
-
-    @Test
-    fun `lesson participant profiles carry viewer capabilities through the typed list response`() = withServer { server, api ->
-        val expected = user(UserCapabilities(true, false))
-        server.enqueue(response(gson.toJson(listOf(expected))))
-
-        assertEquals(listOf(expected), runBlocking { api.usersByPairId(2147483648L) }.data)
-
-        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
-        assertEquals("GET", request.method)
-        assertEquals("/api/schedule/lessons/2147483648/users", request.path)
         assertNull(request.requestUrl?.query)
     }
 

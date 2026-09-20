@@ -44,8 +44,16 @@ interface ItmoWidgetsApi {
         @Query("to") to: LocalDate
     ): ApiResponse<List<LessonDto>>
 
-    @GET("/api/schedule/lessons/{pairId}/users")
-    suspend fun usersByPairId(@Path("pairId") pairId: Long): ApiResponse<List<UserData>>
+    /**
+     * The viewer's accepted friends on one lesson occurrence, filtered by each
+     * friend's schedule audience. A MyITMO pair id names one occurrence; the date
+     * guards against rows left behind after a pair moved.
+     */
+    @GET("/api/schedule/lessons/{pairId}/friends")
+    suspend fun friendsOnLesson(
+        @Path("pairId") pairId: Long,
+        @Query("date") date: LocalDate
+    ): ApiResponse<List<UserProfile>>
 
     // endregion schedule
 

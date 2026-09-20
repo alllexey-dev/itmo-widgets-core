@@ -47,7 +47,7 @@ live in `model/fcm/impl`.
 |---|---|
 | Device | `registerDevice`, `unregisterCurrentDevice` |
 | App | `latestAppVersion`, `appVersionInfo` |
-| Schedule | `syncLessons`, `userLessons`, `usersByPairId` |
+| Schedule | `syncLessons`, `userLessons`, `friendsOnLesson` |
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |

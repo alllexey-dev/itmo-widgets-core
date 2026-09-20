@@ -2,6 +2,9 @@
 
 ## 1.2.0-SNAPSHOT (unreleased)
 
+- `friendsOnLesson(pairId, date)` → `List<UserProfile>`: the viewer's accepted
+  friends on one lesson occurrence (`GET /api/schedule/lessons/{pairId}/friends?date=`).
+  `usersByPairId` is removed.
 - `userFriends(isu)`, required `canViewFriends` and `friendsVisibility` wire fields;
   strict decoding and independent friends privacy (server default ALL).
 
