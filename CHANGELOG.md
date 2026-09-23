@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.7.0-SNAPSHOT — 2026-09-23
+
+Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
+
+- Subject links: `subjectLinks(subjectId, period)` → `SubjectLinksResponse`
+  (`mine`, `shared`, `previous`, `pinnedId`, `audiences`, `premoderation`);
+  `saveSubjectLink(id, SaveSubjectLinkRequest)` with a client-generated ID,
+  `deleteSubjectLink`, `setSubjectLinkSaved`, `pinSubjectLink`,
+  `voteSubjectLink` and `reportSubjectLink` under `/api/links` and
+  `/api/subjects/{subjectId}/links`.
+- `SubjectLink` carries `category` (`LinkCategory`), `visibility`
+  (`LinkVisibility`: PRIVATE, GROUP, FLOW, ALL), the owner-facing `status`
+  (`SubjectLinkStatus`), `audienceLabel`, `reviewNote`, votes, saved and report
+  flags. GROUP and FLOW publish at once; ALL may be premoderated.
+- Moderation: `SubjectLinkTarget(revision, link, author, reports,
+  submitterHistory)` under `targetType = SUBJECT_RESOURCE` with an immutable
+  `SubjectLinkRevision` (`LinkRevisionStatus`).
+- Added separate `ItmoWidgetsModerationApi` for queue decisions, restriction
+  revocation and full typed policy updates; no moderator methods in the user API.
+  `myRestrictions()` lists the viewer's active restrictions.
+- POLICY decisions are typed separately from moderator decisions; no synthetic
+  moderator identity is used for automatic approval.
+- Strict link/moderation decoding: required fields, primitive shapes, integer
+  ranges and duplicate keys; strict enums; unknown restriction capabilities
+  conservatively decode as ALL. Round-trip and all-route MockWebServer tests.
+- Nullable deleted targets preserve case audit.
+
 ## 1.2.0 — 2026-09-21
 
 - `friendsOnLesson(pairId, date)` → `List<UserProfile>`: the viewer's accepted

@@ -68,6 +68,8 @@ class TokenInterceptorTest {
     ) : ItmoWidgets {
         override val api: ItmoWidgetsApi
             get() = error("Not used")
+        override val moderationApi: dev.alllexey.itmowidgets.core.ItmoWidgetsModerationApi
+            get() = error("Not used")
         override val retrofit: Retrofit
             get() = error("Not used")
         override val okHttpClient: OkHttpClient

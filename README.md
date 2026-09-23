@@ -16,6 +16,13 @@
 * **FCM-модель:** типы данных, которые приложение получает через Google FCM.
 * **Строгое декодирование:** обязательные поля и неизвестные значения перечислений не превращаются в null.
 
+Текущий цикл — `1.7.0-SNAPSHOT`, согласованный с Backend `1.7.0-SNAPSHOT` и
+Android `2.2-SNAPSHOT`. Для разработки сборка публикуется в Maven Local; это не
+релиз в Maven Central. Ссылки предметов (категория, видимость «Только я /
+Группа / Поток / Все», голоса, жалобы, закрепление) доступны через `api`,
+модерация — только через отдельный `moderationApi`; сервер проверяет роль при
+каждом действии.
+
 ### 🛠️ Зависимости
 * `my-itmo-api`
 * `OkHttp`
@@ -31,14 +38,12 @@
     <dependency>
         <groupId>dev.alllexey</groupId>
         <artifactId>itmo-widgets-core</artifactId>
-        <version>1.1.9</version>
+        <version>1.7.0-SNAPSHOT</version>
     </dependency>
 </dependencies>
 ```
 
-Текущая разработка идёт в версии `1.2.0-SNAPSHOT`, публикуемой только в локальный
-Maven до релиза Android 2.1. Изменения — в [CHANGELOG.md](CHANGELOG.md),
-соглашения контракта — в [docs/contract.md](docs/contract.md), правила для
-агентов — в [AGENTS.md](AGENTS.md).
+Изменения — в [CHANGELOG.md](CHANGELOG.md), соглашения контракта — в
+[docs/contract.md](docs/contract.md), правила для агентов — в [AGENTS.md](AGENTS.md).
 
 Сборка: `JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew build`.

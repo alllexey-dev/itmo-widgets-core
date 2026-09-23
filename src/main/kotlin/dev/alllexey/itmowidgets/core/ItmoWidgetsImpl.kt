@@ -2,6 +2,8 @@ package dev.alllexey.itmowidgets.core
 
 import api.myitmo.MyItmo
 import com.google.gson.Gson
+import dev.alllexey.itmowidgets.core.model.resources.*
+import dev.alllexey.itmowidgets.core.utils.*
 import dev.alllexey.itmowidgets.core.utils.FriendshipEventPayloadTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.model.social.RelationshipState
 import dev.alllexey.itmowidgets.core.utils.RelationshipStateTypeAdapter
@@ -48,6 +50,10 @@ open class ItmoWidgetsImpl(
         retrofit.create(ItmoWidgetsApi::class.java)
     }
 
+    override val moderationApi: ItmoWidgetsModerationApi by lazy {
+        retrofit.create(ItmoWidgetsModerationApi::class.java)
+    }
+
     override val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .client(okHttpClient)
@@ -73,6 +79,11 @@ open class ItmoWidgetsImpl(
             .registerSubtype(SportFreeSignQueue::class.java, "free")
             .registerSubtype(SportAutoSignQueue::class.java, "auto")
 
+        val moderationTargetAdapter = RuntimeTypeAdapterFactory
+            .of(ModerationCaseTarget::class.java, "targetType")
+            .registerSubtype(SubjectLinkTarget::class.java, "SUBJECT_RESOURCE")
+            .recognizeSubtypes()
+
         myItmo.gson.newBuilder()
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
             .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
@@ -88,6 +99,22 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(UserPrivacySettings::class.java, UserPrivacySettingsTypeAdapter().nullSafe())
             .registerTypeAdapterFactory(sportQueueEntryAdapter)
             .registerTypeAdapterFactory(sportQueueAdapter)
+            .registerTypeAdapter(LinkCategory::class.java, LinkCategoryTypeAdapter())
+            .registerTypeAdapter(LinkVisibility::class.java, LinkVisibilityTypeAdapter())
+            .registerTypeAdapter(SubjectLinkStatus::class.java, SubjectLinkStatusTypeAdapter())
+            .registerTypeAdapter(LinkRevisionStatus::class.java, LinkRevisionStatusTypeAdapter())
+            .registerTypeAdapter(ModerationActor::class.java, ModerationActorTypeAdapter())
+            .registerTypeAdapter(ReportReason::class.java, ReportReasonTypeAdapter())
+            .registerTypeAdapter(RestrictionCapability::class.java, RestrictionCapabilityTypeAdapter())
+            .registerTypeAdapter(ModerationAction::class.java, ModerationActionTypeAdapter())
+            .registerTypeAdapter(ModerationTargetType::class.java, ModerationTargetTypeTypeAdapter())
+            .registerTypeAdapter(ModerationCaseStatus::class.java, ModerationCaseStatusTypeAdapter())
+            .registerTypeAdapter(ModerationCaseReason::class.java, ModerationCaseReasonTypeAdapter())
+            .registerTypeAdapterFactory(SubjectLinkModelsTypeAdapterFactory())
+            .registerTypeAdapterFactory(UserRestrictionTypeAdapterFactory())
+            .registerTypeAdapterFactory(ModerationPolicyTypeAdapterFactory())
+            .registerTypeAdapterFactory(ModerationModelsTypeAdapterFactory())
+            .registerTypeAdapterFactory(moderationTargetAdapter)
             .create()
     }
 

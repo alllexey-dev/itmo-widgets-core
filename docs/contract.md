@@ -25,6 +25,21 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
 - `SportQueueEntry` and `SportQueue`: polymorphic on `type` (`free` / `auto`).
 - `FriendshipEventPayload`: event, actor and time required.
 - `OffsetDateTime` through the shared adapter.
+- Subject link, restriction and moderation models: required fields, primitive
+  shapes, integer ranges and duplicate keys are checked before reflection
+  (`SubjectLinkModelsTypeAdapterFactory`, `ModerationModelsTypeAdapterFactory`).
+  `LinkCategory`, `LinkVisibility`, `SubjectLinkStatus`, `LinkRevisionStatus`,
+  report reason and moderation enums are strict: unknown names, null and
+  numbers fail. `SubjectLink.myVote` must be -1, 0 or 1; a revision `number`
+  must be positive.
+- Unknown `RestrictionCapability` strings conservatively decode as ALL so a
+  newer server cannot accidentally enable an action on an older client. Missing,
+  null or non-string capabilities still fail. This is the only enum fallback.
+- `ModerationPolicy`: all five fields are required on the wire despite local
+  constructor defaults. `ModerationCaseTarget` is polymorphic on `targetType`;
+  only SUBJECT_RESOURCE (`SubjectLinkTarget`) is implemented. TEACHER_REVIEW is
+  reserved in the enum. The target is nullable because a deleted link leaves its
+  case for audit; other case fields and decisions remain required.
 
 `friendsVisibility` defaults to ALL only for explicitly constructed settings;
 wire responses must include it. `canViewFriends` is required on the wire and
@@ -50,6 +65,8 @@ live in `model/fcm/impl`.
 | Schedule | `syncLessons`, `userLessons`, `friendsOnLesson` |
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData` |
+| Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `setSubjectLinkSaved`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
+| Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
 
 Semantics of each route are documented in the Backend repository under
@@ -60,4 +77,37 @@ Semantics of each route are documented in the Backend repository under
 `src/test/kotlin`: contract tests per group (`DeviceApiContractTest`,
 `PrivacyApiContractTest`, `SportApiContractTest`, `social/SocialApiContractTest`,
 `AppVersionApiContractTest`, `FcmPayloadContractTest`, `TokenInterceptorTest`)
-using MockWebServer and synthetic data.
+using MockWebServer and synthetic data. Link and moderation models and all
+user/moderator routes are covered by `resources/SubjectLinkContractTest` and
+`resources/SubjectLinkApiTest`.
+
+## Subject links
+
+| Method | Route | Body | Reply |
+|---|---|---|---|
+| `subjectLinks` | `GET /api/subjects/{subjectId}/links?period=` | — | `SubjectLinksResponse` |
+| `saveSubjectLink` | `PUT /api/links/{id}` | `SaveSubjectLinkRequest` | `SubjectLink` |
+| `deleteSubjectLink` | `DELETE /api/links/{id}` | — | `Unit` |
+| `setSubjectLinkSaved` | `PUT /api/links/{id}/saved` | `SetLinkSavedRequest` | `SubjectLink` |
+| `pinSubjectLink` | `PUT /api/subjects/{subjectId}/links/pin` | `PinSubjectLinkRequest` | `SubjectLinksResponse` |
+| `voteSubjectLink` | `PUT /api/links/{id}/vote` | `ResourceVoteRequest` | `SubjectLink` |
+| `reportSubjectLink` | `POST /api/links/{id}/report` | `ModerationReportRequest` | `SubjectLink` |
+
+A link has one of `LinkCategory` (`SCORES, QUEUE, MATERIALS, TASKS, RECORDINGS,
+NOTES, EXAM, CHAT, OTHER`) and a `LinkVisibility` (`PRIVATE, GROUP, FLOW, ALL`).
+GROUP and FLOW publish at once to the author's schedule flows; ALL goes through
+premoderation when `premoderation` is true. `status` is the owner's view
+(`PRIVATE, PENDING, PUBLISHED, REJECTED, HIDDEN`); other viewers always get
+PUBLISHED. The period key is `YYYY-S`.
+
+`saveSubjectLink` creates a link under a client-generated UUID or replaces the
+viewer's own one. `mine` holds the viewer's links, `shared` the visible links of
+others, `previous` approved ALL links of past periods, `audiences` the GROUP and
+FLOW audiences the viewer can publish to. `PinSubjectLinkRequest.linkId = null`
+removes the pin. Optional fields (`title`, `audienceLabel`, `reviewNote`,
+`author`, `pinnedId`, `linkId`) are omitted from Core requests when null and
+accepted both absent and null in responses.
+
+Automatic decisions have required `actor=POLICY`, null moderatorId and APPROVE;
+MODERATOR decisions require moderatorId. Link moderation cases carry the
+reviewed immutable `SubjectLinkRevision` and the link itself.

@@ -5,6 +5,8 @@ import dev.alllexey.itmowidgets.core.model.social.UserProfile
 import dev.alllexey.itmowidgets.core.model.social.UserLookupRequest
 import dev.alllexey.itmowidgets.core.model.social.UserLookupResponse
 import retrofit2.http.*
+import dev.alllexey.itmowidgets.core.model.resources.*
+import java.util.UUID
 import java.time.LocalDate
 
 interface ItmoWidgetsApi {
@@ -109,7 +111,35 @@ interface ItmoWidgetsApi {
     @GET("/api/users/me/data")
     suspend fun myUserData(): ApiResponse<UserData>
 
+    @GET("/api/users/me/restrictions")
+    suspend fun myRestrictions(): ApiResponse<List<UserRestriction>>
+
     // endregion user
+
+    // region links
+
+    @GET("/api/subjects/{subjectId}/links")
+    suspend fun subjectLinks(@Path("subjectId") subjectId: Long, @Query("period") period: String): ApiResponse<SubjectLinksResponse>
+
+    @PUT("/api/links/{id}")
+    suspend fun saveSubjectLink(@Path("id") id: UUID, @Body request: SaveSubjectLinkRequest): ApiResponse<SubjectLink>
+
+    @DELETE("/api/links/{id}")
+    suspend fun deleteSubjectLink(@Path("id") id: UUID): ApiResponse<Unit>
+
+    @PUT("/api/links/{id}/saved")
+    suspend fun setSubjectLinkSaved(@Path("id") id: UUID, @Body request: SetLinkSavedRequest): ApiResponse<SubjectLink>
+
+    @PUT("/api/subjects/{subjectId}/links/pin")
+    suspend fun pinSubjectLink(@Path("subjectId") subjectId: Long, @Body request: PinSubjectLinkRequest): ApiResponse<SubjectLinksResponse>
+
+    @PUT("/api/links/{id}/vote")
+    suspend fun voteSubjectLink(@Path("id") id: UUID, @Body request: ResourceVoteRequest): ApiResponse<SubjectLink>
+
+    @POST("/api/links/{id}/report")
+    suspend fun reportSubjectLink(@Path("id") id: UUID, @Body request: ModerationReportRequest): ApiResponse<SubjectLink>
+
+    // endregion links
 
     // region sport
 

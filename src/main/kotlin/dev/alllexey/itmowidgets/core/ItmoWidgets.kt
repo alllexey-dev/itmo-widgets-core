@@ -8,6 +8,8 @@ interface ItmoWidgets {
 
     val api: ItmoWidgetsApi
 
+    val moderationApi: ItmoWidgetsModerationApi
+
     val retrofit: Retrofit
 
     val okHttpClient: OkHttpClient
