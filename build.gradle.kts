@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.alllexey"
-version = "1.2.0"
+version = "1.7.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -13,7 +13,6 @@ repositories {
 
 signing {
     useGpgCmd()
-    sign(configurations.runtimeElements.get())
 }
 
 mavenPublishing {
