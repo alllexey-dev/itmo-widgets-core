@@ -40,6 +40,11 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
   only SUBJECT_RESOURCE (`SubjectLinkTarget`) is implemented. TEACHER_REVIEW is
   reserved in the enum. The target is nullable because a deleted link leaves its
   case for audit; other case fields and decisions remain required.
+- `WebLoginPreview`: `challengeId`, `createdAt` and `expiresAt` are required
+  strings that must parse as a UUID and ISO offset timestamps; `userAgent` is
+  optional but, when present, a string (`WebLoginPreviewTypeAdapterFactory`).
+- `myRoles()` returns plain strings so a role added by a newer server never
+  breaks decoding; consumers compare against the names they know.
 
 `friendsVisibility` defaults to ALL only for explicitly constructed settings;
 wire responses must include it. `canViewFriends` is required on the wire and
@@ -64,7 +69,8 @@ live in `model/fcm/impl`.
 | App | `latestAppVersion`, `appVersionInfo` |
 | Schedule | `syncLessons`, `userLessons`, `friendsOnLesson` |
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
-| Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData` |
+| Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData`, `myRoles` |
+| Web sign-in | `webLoginPreview`, `approveWebLogin` |
 | Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `setSubjectLinkSaved`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
 | Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
@@ -79,7 +85,8 @@ Semantics of each route are documented in the Backend repository under
 `AppVersionApiContractTest`, `FcmPayloadContractTest`, `TokenInterceptorTest`)
 using MockWebServer and synthetic data. Link and moderation models and all
 user/moderator routes are covered by `resources/SubjectLinkContractTest` and
-`resources/SubjectLinkApiTest`.
+`resources/SubjectLinkApiTest`. Roles and web sign-in are covered by
+`weblogin/WebLoginContractTest` and `weblogin/WebLoginApiTest`.
 
 ## Subject links
 
@@ -116,3 +123,18 @@ accepted both absent and null in responses.
 Automatic decisions have required `actor=POLICY`, null moderatorId and APPROVE;
 MODERATOR decisions require moderatorId. Link moderation cases carry the
 reviewed immutable `SubjectLinkRevision` and the link itself.
+
+## Web sign-in and roles
+
+| Method | Route | Body | Reply |
+|---|---|---|---|
+| `myRoles` | `GET /api/users/me/roles` | — | `List<String>` (e.g. `MODERATOR`, `ADMIN`) |
+| `webLoginPreview` | `GET /api/users/me/web-login/{code}` | — | `WebLoginPreview` |
+| `approveWebLogin` | `POST /api/users/me/web-login/{challengeId}/approve` | — | `Unit` (`data: {}`) |
+
+The site shows a short code (also inside its QR link); the app looks it up with
+`webLoginPreview` and shows `WebLoginPreview(challengeId, userAgent, createdAt,
+expiresAt)` before the user approves it by `challengeId`. Backend accepts both
+calls only with an app ITMO.ID token, not a web session. An unknown, used or
+expired code or challenge is HTTP 404 `not_found`, which Retrofit raises as
+`HttpException`.

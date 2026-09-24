@@ -112,6 +112,7 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(ModerationCaseReason::class.java, ModerationCaseReasonTypeAdapter())
             .registerTypeAdapterFactory(SubjectLinkModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(UserRestrictionTypeAdapterFactory())
+            .registerTypeAdapterFactory(WebLoginPreviewTypeAdapterFactory())
             .registerTypeAdapterFactory(ModerationPolicyTypeAdapterFactory())
             .registerTypeAdapterFactory(ModerationModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(moderationTargetAdapter)

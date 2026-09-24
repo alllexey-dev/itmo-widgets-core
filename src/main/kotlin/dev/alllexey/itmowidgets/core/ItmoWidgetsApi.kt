@@ -114,6 +114,17 @@ interface ItmoWidgetsApi {
     @GET("/api/users/me/restrictions")
     suspend fun myRestrictions(): ApiResponse<List<UserRestriction>>
 
+    /** The viewer's role names, e.g. `MODERATOR`, `ADMIN`; unknown future roles stay plain strings. */
+    @GET("/api/users/me/roles")
+    suspend fun myRoles(): ApiResponse<List<String>>
+
+    /** The pending browser sign-in behind a code; 404 `not_found` when it is unknown, used or expired. */
+    @GET("/api/users/me/web-login/{code}")
+    suspend fun webLoginPreview(@Path("code") code: String): ApiResponse<WebLoginPreview>
+
+    @POST("/api/users/me/web-login/{challengeId}/approve")
+    suspend fun approveWebLogin(@Path("challengeId") challengeId: UUID): ApiResponse<Unit>
+
     // endregion user
 
     // region links

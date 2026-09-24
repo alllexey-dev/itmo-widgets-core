@@ -4,6 +4,15 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-24: web sign-in approved from the app. `myRoles()` →
+  `List<String>` (`GET /api/users/me/roles`, unknown roles stay plain strings);
+  `webLoginPreview(code)` → `WebLoginPreview(challengeId, userAgent, createdAt,
+  expiresAt)` (`GET /api/users/me/web-login/{code}`) and
+  `approveWebLogin(challengeId)` → `Unit`
+  (`POST /api/users/me/web-login/{challengeId}/approve`). Strict decoding:
+  required ID and timestamps, optional string `userAgent`, no duplicate keys.
+  Round-trip and MockWebServer route tests.
+
 - 2026-09-24: links go to one schedule flow of any depth. `LinkVisibility` is
   PRIVATE, FLOW, ALL; `flowId` is added to `SubjectLink`,
   `SubjectLinkRevision` and `SaveSubjectLinkRequest` and decodes only together
