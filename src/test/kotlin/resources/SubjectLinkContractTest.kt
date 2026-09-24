@@ -16,7 +16,7 @@ class SubjectLinkContractTest {
     fun `every public link and moderation DTO round trips`() {
         val values = listOf(fixtures.link, fixtures.ownLink, fixtures.previousLink, fixtures.audience, fixtures.links,
             fixtures.links.copy(pinnedId = null, mine = emptyList(), audiences = emptyList()), fixtures.revision, fixtures.pendingRevision,
-            fixtures.save, fixtures.save.copy(title = "Очередь", visibility = LinkVisibility.PRIVATE), SetLinkSavedRequest(false),
+            fixtures.flowRevision, fixtures.save, fixtures.save.copy(title = "Очередь", visibility = LinkVisibility.PRIVATE, flowId = null), SetLinkSavedRequest(false),
             PinSubjectLinkRequest("2026-1", fixtures.id), PinSubjectLinkRequest("2026-1"), ResourceVoteRequest(-1),
             fixtures.restriction, fixtures.report, fixtures.decision, fixtures.history, fixtures.target, fixtures.case,
             fixtures.case.copy(target = null), fixtures.settings, ModerationPolicy(false, 5, -4, 8, 12),
@@ -28,17 +28,20 @@ class SubjectLinkContractTest {
 
     @Test
     fun `link models use the exact wire field names`() {
-        assertEquals(setOf("id", "subjectId", "subjectName", "periodKey", "category", "url", "title", "visibility", "audienceLabel",
-            "status", "reviewNote", "score", "myVote", "isMine", "isSaved", "reportedByMe", "author", "updatedAt"),
+        assertEquals(setOf("id", "subjectId", "subjectName", "periodKey", "category", "url", "title", "visibility", "flowId",
+            "audienceLabel", "status", "reviewNote", "score", "myVote", "isMine", "isSaved", "reportedByMe", "author", "updatedAt"),
             gson.toJsonTree(fixtures.link.copy(reviewNote = "Проверено")).asJsonObject.keySet())
         assertEquals(setOf("mine", "shared", "previous", "pinnedId", "audiences", "premoderation"),
             gson.toJsonTree(fixtures.links).asJsonObject.keySet())
-        assertEquals(setOf("visibility", "label"), gson.toJsonTree(fixtures.audience).asJsonObject.keySet())
-        assertEquals(setOf("id", "linkId", "number", "category", "url", "title", "visibility", "status", "submittedAt", "decidedAt", "note"),
-            gson.toJsonTree(fixtures.revision).asJsonObject.keySet())
+        assertEquals(setOf("flowId", "label", "typeId", "depth"), gson.toJsonTree(fixtures.audience).asJsonObject.keySet())
+        assertEquals(setOf("id", "linkId", "number", "category", "url", "title", "visibility", "flowId", "status", "submittedAt",
+            "decidedAt", "note"), gson.toJsonTree(fixtures.flowRevision).asJsonObject.keySet())
         assertEquals(setOf("targetType", "revision", "link", "author", "reports", "submitterHistory"), gson.toJsonTree(fixtures.target).asJsonObject.keySet())
         assertEquals(JsonParser.parseString("""{"subjectId":42,"subjectName":"Предмет","periodKey":"2026-1","category":"QUEUE",
-            "url":"https://example.org/queue","visibility":"FLOW"}"""), gson.toJsonTree(fixtures.save))
+            "url":"https://example.org/queue","visibility":"FLOW","flowId":7103}"""), gson.toJsonTree(fixtures.save))
+        assertEquals(JsonParser.parseString("""{"subjectId":42,"subjectName":"Предмет","periodKey":"2026-1","category":"QUEUE",
+            "url":"https://example.org/queue","visibility":"PRIVATE"}"""),
+            gson.toJsonTree(fixtures.save.copy(visibility = LinkVisibility.PRIVATE, flowId = null)))
         assertEquals(JsonParser.parseString("""{"saved":true}"""), gson.toJsonTree(SetLinkSavedRequest(true)))
         assertEquals(JsonParser.parseString("""{"periodKey":"2026-1","linkId":"${fixtures.id}"}"""),
             gson.toJsonTree(PinSubjectLinkRequest("2026-1", fixtures.id)))
@@ -49,12 +52,15 @@ class SubjectLinkContractTest {
 
     @Test
     fun `optional link fields decode from both null and absence`() {
-        val optional = listOf("title", "audienceLabel", "reviewNote", "author")
-        val explicitNulls = gson.toJsonTree(fixtures.link).asJsonObject.apply { optional.forEach { add(it, JsonNull.INSTANCE) } }
-        val expected = fixtures.link.copy(title = null, audienceLabel = null, reviewNote = null, author = null)
+        val optional = listOf("title", "flowId", "audienceLabel", "reviewNote", "author")
+        val publicLink = fixtures.link.copy(visibility = LinkVisibility.ALL)
+        val explicitNulls = gson.toJsonTree(publicLink).asJsonObject.apply { optional.forEach { add(it, JsonNull.INSTANCE) } }
+        val expected = publicLink.copy(title = null, flowId = null, audienceLabel = null, reviewNote = null, author = null)
         assertEquals(expected, gson.fromJson(explicitNulls, SubjectLink::class.java))
-        val absent = gson.toJsonTree(fixtures.link).asJsonObject.apply { optional.forEach { remove(it) } }
+        val absent = gson.toJsonTree(publicLink).asJsonObject.apply { optional.forEach { remove(it) } }
         assertEquals(expected, gson.fromJson(absent, SubjectLink::class.java))
+        val privateSave = gson.toJsonTree(fixtures.save.copy(visibility = LinkVisibility.PRIVATE, flowId = null)).asJsonObject
+        assertNull(gson.fromJson(privateSave.apply { add("flowId", JsonNull.INSTANCE) }, SaveSubjectLinkRequest::class.java).flowId)
         val noPin = gson.toJsonTree(fixtures.links).asJsonObject.apply { add("pinnedId", JsonNull.INSTANCE) }
         assertNull(gson.fromJson(noPin, SubjectLinksResponse::class.java).pinnedId)
     }
@@ -73,8 +79,10 @@ class SubjectLinkContractTest {
             val json = gson.toJsonTree(fixtures.link).asJsonObject.apply { add(field, JsonParser.parseString(wire)) }
             assertFailsWith<JsonParseException>("SubjectLink.$field: $wire") { gson.fromJson(json, SubjectLink::class.java) }
         }
-        val audience = gson.toJsonTree(fixtures.audience).asJsonObject.apply { addProperty("visibility", "EVERYONE") }
-        assertFailsWith<JsonParseException> { gson.fromJson(audience, LinkAudience::class.java) }
+        for (wire in listOf("\"GROUP\"", "\"FLOW_ALL\"")) {
+            val json = gson.toJsonTree(fixtures.link).asJsonObject.apply { add("visibility", JsonParser.parseString(wire)) }
+            assertFailsWith<JsonParseException>("SubjectLink.visibility: $wire") { gson.fromJson(json, SubjectLink::class.java) }
+        }
         assertEquals(RestrictionCapability.ALL, gson.fromJson("\"FUTURE_CAPABILITY\"", RestrictionCapability::class.java))
         for (wire in listOf("null", "0", "false", "{}")) {
             assertFailsWith<JsonParseException> { gson.fromJson(wire, RestrictionCapability::class.java) }
@@ -87,7 +95,7 @@ class SubjectLinkContractTest {
             Triple(fixtures.link as Any, SubjectLink::class.java, listOf("id", "subjectId", "subjectName", "periodKey", "category", "url",
                 "visibility", "status", "score", "myVote", "isMine", "isSaved", "reportedByMe", "updatedAt")),
             Triple(fixtures.links as Any, SubjectLinksResponse::class.java, listOf("mine", "shared", "previous", "audiences", "premoderation")),
-            Triple(fixtures.audience as Any, LinkAudience::class.java, listOf("visibility", "label")),
+            Triple(fixtures.audience as Any, LinkAudience::class.java, listOf("flowId", "label", "typeId", "depth")),
             Triple(fixtures.revision as Any, SubjectLinkRevision::class.java, listOf("id", "linkId", "number", "category", "url",
                 "visibility", "status", "submittedAt")),
             Triple(fixtures.target as Any, SubjectLinkTarget::class.java, listOf("revision", "link", "author", "reports", "submitterHistory")),
@@ -118,6 +126,10 @@ class SubjectLinkContractTest {
         }
         val badRevision = gson.toJsonTree(fixtures.revision).asJsonObject.apply { addProperty("number", 0) }
         assertFailsWith<JsonParseException> { gson.fromJson(badRevision, SubjectLinkRevision::class.java) }
+        for ((field, wire) in listOf("flowId" to "\"7103\"", "flowId" to "1.5", "flowId" to "true", "depth" to "0", "typeId" to "\"3\"")) {
+            val malformed = gson.toJsonTree(fixtures.audience).asJsonObject.apply { add(field, JsonParser.parseString(wire)) }
+            assertFailsWith<JsonParseException>("LinkAudience.$field: $wire") { gson.fromJson(malformed, LinkAudience::class.java) }
+        }
         val duplicate = gson.toJson(fixtures.links).dropLast(1) + ",\"premoderation\":false}"
         assertFailsWith<JsonParseException> { gson.fromJson(duplicate, SubjectLinksResponse::class.java) }
         for (list in listOf("mine", "shared", "previous", "audiences")) {
@@ -127,6 +139,31 @@ class SubjectLinkContractTest {
         val badPin = gson.toJsonTree(fixtures.links).asJsonObject.apply { addProperty("pinnedId", "not-a-uuid") }
         assertFailsWith<JsonParseException> { gson.fromJson(badPin, SubjectLinksResponse::class.java) }
         assertFailsWith<JsonParseException> { gson.fromJson("""{"policies":{"SUBJECT_RESOURCE":null}}""", ModerationSettings::class.java) }
+    }
+
+    @Test
+    fun `a flow id travels exactly with FLOW visibility`() {
+        val cases = listOf(
+            gson.toJsonTree(fixtures.link).asJsonObject to SubjectLink::class.java,
+            gson.toJsonTree(fixtures.flowRevision).asJsonObject to SubjectLinkRevision::class.java,
+            gson.toJsonTree(fixtures.save).asJsonObject to SaveSubjectLinkRequest::class.java,
+        )
+        for ((json, type) in cases) {
+            assertEquals(7103L, (gson.fromJson(json, type) as Any).let {
+                when (it) { is SubjectLink -> it.flowId; is SubjectLinkRevision -> it.flowId; else -> (it as SaveSubjectLinkRequest).flowId }
+            })
+            for (wire in listOf("null", "\"7103\"", "1.5", "9223372036854775808", "{}")) {
+                val malformed = json.deepCopy().apply { add("flowId", JsonParser.parseString(wire)) }
+                assertFailsWith<JsonParseException>("${type.simpleName}.flowId: $wire") { gson.fromJson(malformed, type) }
+            }
+            assertFailsWith<JsonParseException>("${type.simpleName} without flowId") {
+                gson.fromJson(json.deepCopy().apply { remove("flowId") }, type)
+            }
+            for (visibility in listOf("PRIVATE", "ALL")) {
+                val widened = json.deepCopy().apply { addProperty("visibility", visibility) }
+                assertFailsWith<JsonParseException>("${type.simpleName} $visibility with flowId") { gson.fromJson(widened, type) }
+            }
+        }
     }
 
     @Test

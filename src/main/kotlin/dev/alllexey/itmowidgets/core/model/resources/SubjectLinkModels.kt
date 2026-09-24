@@ -7,8 +7,8 @@ import java.util.UUID
 /** Approved MATERIALS, TASKS, RECORDINGS, NOTES and EXAM links are also shown to later periods. */
 enum class LinkCategory { SCORES, QUEUE, MATERIALS, TASKS, RECORDINGS, NOTES, EXAM, CHAT, OTHER }
 
-/** GROUP and FLOW publish to the author's schedule flows at once; ALL may be premoderated. */
-enum class LinkVisibility { PRIVATE, GROUP, FLOW, ALL }
+/** FLOW publishes to one schedule flow of the author (`flowId`) at once; ALL may be premoderated. */
+enum class LinkVisibility { PRIVATE, FLOW, ALL }
 
 /** Owners see their own link's review state; other viewers always receive PUBLISHED. */
 enum class SubjectLinkStatus { PRIVATE, PENDING, PUBLISHED, REJECTED, HIDDEN }
@@ -25,6 +25,9 @@ data class SubjectLink(
     val url: String,
     val title: String?,
     val visibility: LinkVisibility,
+    /** The schedule flow of a FLOW link; null otherwise. */
+    val flowId: Long?,
+    /** The schedule name of a FLOW link's flow (`ФИЗ ПИИКТ 3.2.1`); null otherwise. */
     val audienceLabel: String?,
     val status: SubjectLinkStatus,
     val reviewNote: String?,
@@ -37,8 +40,12 @@ data class SubjectLink(
     val updatedAt: OffsetDateTime,
 )
 
-/** A GROUP or FLOW audience the viewer can publish to, labelled with its schedule group names. */
-data class LinkAudience(val visibility: LinkVisibility, val label: String)
+/**
+ * A schedule flow of the subject the viewer can publish a FLOW link to. [label] is the flow's schedule
+ * name, [typeId] the schedule lesson type, [depth] the nesting level of its number (`3.2.1` is 3).
+ * Backend sorts audiences by depth, then label.
+ */
+data class LinkAudience(val flowId: Long, val label: String, val typeId: Int, val depth: Int)
 
 /** mine holds the viewer's links, shared the visible links of others, previous approved links of past periods. */
 data class SubjectLinksResponse(
@@ -59,6 +66,7 @@ data class SubjectLinkRevision(
     val url: String,
     val title: String?,
     val visibility: LinkVisibility,
+    val flowId: Long?,
     val status: LinkRevisionStatus,
     val submittedAt: OffsetDateTime,
     val decidedAt: OffsetDateTime?,
@@ -74,6 +82,8 @@ data class SaveSubjectLinkRequest(
     val url: String,
     val title: String?,
     val visibility: LinkVisibility,
+    /** Required with FLOW and one of the viewer's flows of the subject and period; null otherwise. */
+    val flowId: Long? = null,
 )
 
 data class SetLinkSavedRequest(val saved: Boolean)

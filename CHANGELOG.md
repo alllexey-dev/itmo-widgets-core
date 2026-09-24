@@ -4,6 +4,11 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-24: links go to one schedule flow of any depth. `LinkVisibility` is
+  PRIVATE, FLOW, ALL; `flowId` is added to `SubjectLink`,
+  `SubjectLinkRevision` and `SaveSubjectLinkRequest` and decodes only together
+  with FLOW. `LinkAudience` is now `flowId`, `label`, `typeId`, `depth`.
+
 - Subject links: `subjectLinks(subjectId, period)` → `SubjectLinksResponse`
   (`mine`, `shared`, `previous`, `pinnedId`, `audiences`, `premoderation`);
   `saveSubjectLink(id, SaveSubjectLinkRequest)` with a client-generated ID,
@@ -11,9 +16,9 @@ Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
   `voteSubjectLink` and `reportSubjectLink` under `/api/links` and
   `/api/subjects/{subjectId}/links`.
 - `SubjectLink` carries `category` (`LinkCategory`), `visibility`
-  (`LinkVisibility`: PRIVATE, GROUP, FLOW, ALL), the owner-facing `status`
-  (`SubjectLinkStatus`), `audienceLabel`, `reviewNote`, votes, saved and report
-  flags. GROUP and FLOW publish at once; ALL may be premoderated.
+  (`LinkVisibility`), the owner-facing `status` (`SubjectLinkStatus`),
+  `audienceLabel`, `reviewNote`, votes, saved and report flags. Flow links
+  publish at once; ALL may be premoderated.
 - Moderation: `SubjectLinkTarget(revision, link, author, reports,
   submitterHistory)` under `targetType = SUBJECT_RESOURCE` with an immutable
   `SubjectLinkRevision` (`LinkRevisionStatus`).

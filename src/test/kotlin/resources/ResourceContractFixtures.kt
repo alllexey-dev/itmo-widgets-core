@@ -12,21 +12,22 @@ internal object ResourceContractFixtures {
     val now: OffsetDateTime = OffsetDateTime.parse("2026-09-22T09:00:00Z")
     val user = UserData(123456, "Synthetic user", null, emptyList(), UserCapabilities(false, false, false))
     val link = SubjectLink(id, 42, "Предмет", "2026-1", LinkCategory.SCORES,
-        "https://docs.google.com/spreadsheets/d/example#gid=1", "Баллы", LinkVisibility.GROUP, "P3119, P3120",
+        "https://docs.google.com/spreadsheets/d/example#gid=1", "Баллы", LinkVisibility.FLOW, 7103, "ФИЗ ПИИКТ 3.2.1",
         SubjectLinkStatus.PUBLISHED, null, 2, 1, false, true, false, user, now)
     val ownLink = link.copy(id = otherId, category = LinkCategory.CHAT, url = "https://t.me/example", title = null,
-        visibility = LinkVisibility.ALL, audienceLabel = null, status = SubjectLinkStatus.REJECTED, reviewNote = "Не по предмету",
+        visibility = LinkVisibility.ALL, flowId = null, audienceLabel = null, status = SubjectLinkStatus.REJECTED, reviewNote = "Не по предмету",
         score = 0, myVote = 0, isMine = true, isSaved = false, author = null)
     val previousLink = link.copy(periodKey = "2025-1", category = LinkCategory.MATERIALS, visibility = LinkVisibility.ALL,
-        audienceLabel = null, myVote = -1, isSaved = false, reportedByMe = true)
-    val audience = LinkAudience(LinkVisibility.FLOW, "P3119, P3120")
+        flowId = null, audienceLabel = null, myVote = -1, isSaved = false, reportedByMe = true)
+    val audience = LinkAudience(7103, "ФИЗ ПИИКТ 3.2.1", 2, 3)
     val links = SubjectLinksResponse(listOf(ownLink), listOf(link), listOf(previousLink), id,
-        listOf(LinkAudience(LinkVisibility.GROUP, "P3119"), audience), true)
+        listOf(LinkAudience(7101, "ФИЗ ПИИКТ 3", 1, 1), LinkAudience(7102, "ФИЗ ПИИКТ 3.2", 3, 2), audience), true)
     val revision = SubjectLinkRevision(otherId, id, 2, LinkCategory.MATERIALS, previousLink.url, "Материалы",
-        LinkVisibility.ALL, LinkRevisionStatus.APPROVED, now, now, "Проверено")
+        LinkVisibility.ALL, null, LinkRevisionStatus.APPROVED, now, now, "Проверено")
+    val flowRevision = revision.copy(visibility = LinkVisibility.FLOW, flowId = 7103)
     val pendingRevision = revision.copy(status = LinkRevisionStatus.PENDING, decidedAt = null, note = null, title = null)
     val save = SaveSubjectLinkRequest(42, "Предмет", "2026-1", LinkCategory.QUEUE, "https://example.org/queue", null,
-        LinkVisibility.FLOW)
+        LinkVisibility.FLOW, 7103)
     val restriction = UserRestriction(id, RestrictionCapability.VOTE, "Правила", now, null)
     val report = ModerationReport(ReportReason.BROKEN, "Не открывается", now)
     val decision = ModerationDecision(id, id, ModerationAction.HIDE, "Проверено", null, now)

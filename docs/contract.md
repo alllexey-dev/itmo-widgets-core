@@ -94,17 +94,22 @@ user/moderator routes are covered by `resources/SubjectLinkContractTest` and
 | `reportSubjectLink` | `POST /api/links/{id}/report` | `ModerationReportRequest` | `SubjectLink` |
 
 A link has one of `LinkCategory` (`SCORES, QUEUE, MATERIALS, TASKS, RECORDINGS,
-NOTES, EXAM, CHAT, OTHER`) and a `LinkVisibility` (`PRIVATE, GROUP, FLOW, ALL`).
-GROUP and FLOW publish at once to the author's schedule flows; ALL goes through
-premoderation when `premoderation` is true. `status` is the owner's view
+NOTES, EXAM, CHAT, OTHER`) and a `LinkVisibility` (`PRIVATE, FLOW, ALL`).
+FLOW publishes at once to one schedule flow of the author named by `flowId`
+(lectures `ФИЗ ПИИКТ 3`, practice `3.2` or labs `3.2.1`); ALL goes through
+premoderation when `premoderation` is true. `flowId` is present exactly with
+FLOW in `SubjectLink`, `SubjectLinkRevision` and `SaveSubjectLinkRequest`;
+decoding rejects FLOW without it, another visibility with it, and non-integer
+values. `audienceLabel` is the flow's schedule name. `status` is the owner's view
 (`PRIVATE, PENDING, PUBLISHED, REJECTED, HIDDEN`); other viewers always get
 PUBLISHED. The period key is `YYYY-S`.
 
 `saveSubjectLink` creates a link under a client-generated UUID or replaces the
 viewer's own one. `mine` holds the viewer's links, `shared` the visible links of
-others, `previous` approved ALL links of past periods, `audiences` the GROUP and
-FLOW audiences the viewer can publish to. `PinSubjectLinkRequest.linkId = null`
-removes the pin. Optional fields (`title`, `audienceLabel`, `reviewNote`,
+others, `previous` approved ALL links of past periods, `audiences` the viewer's
+flows as `LinkAudience(flowId, label, typeId, depth)` sorted by depth, then
+label (`depth` is at least 1). `PinSubjectLinkRequest.linkId = null`
+removes the pin. Optional fields (`title`, `flowId`, `audienceLabel`, `reviewNote`,
 `author`, `pinnedId`, `linkId`) are omitted from Core requests when null and
 accepted both absent and null in responses.
 

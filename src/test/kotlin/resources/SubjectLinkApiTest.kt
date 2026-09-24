@@ -24,9 +24,11 @@ class SubjectLinkApiTest {
         val pin = PinSubjectLinkRequest("2026-1", id)
         val unpin = PinSubjectLinkRequest("2026-1")
         val report = ModerationReportRequest(ReportReason.BROKEN, "Не открывается")
+        val privateSave = fixtures.save.copy(visibility = LinkVisibility.PRIVATE, flowId = null)
         assertCalls(server, client, listOf(
             Call("GET", "/api/subjects/42/links?period=2026-1", null, fixtures.links) { api.subjectLinks(42, "2026-1") },
             Call("PUT", "/api/links/$id", fixtures.save, fixtures.link) { api.saveSubjectLink(id, fixtures.save) },
+            Call("PUT", "/api/links/$id", privateSave, fixtures.ownLink) { api.saveSubjectLink(id, privateSave) },
             Call("DELETE", "/api/links/$id", null, Unit) { api.deleteSubjectLink(id) },
             Call("PUT", "/api/links/$id/saved", SetLinkSavedRequest(true), fixtures.link) { api.setSubjectLinkSaved(id, SetLinkSavedRequest(true)) },
             Call("PUT", "/api/subjects/42/links/pin", pin, fixtures.links) { api.pinSubjectLink(42, pin) },
