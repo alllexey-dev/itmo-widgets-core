@@ -4,6 +4,11 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-24: saving another student's link is removed. `setSubjectLinkSaved`
+  (`PUT /api/links/{id}/saved`), `SetLinkSavedRequest` and
+  `SubjectLink.isSaved` are gone; an `isSaved` key from an older backend is
+  ignored like any unknown key.
+
 - 2026-09-24: web sign-in approved from the app. `myRoles()` →
   `List<String>` (`GET /api/users/me/roles`, unknown roles stay plain strings);
   `webLoginPreview(code)` → `WebLoginPreview(challengeId, userAgent, createdAt,

@@ -30,7 +30,6 @@ class SubjectLinkApiTest {
             Call("PUT", "/api/links/$id", fixtures.save, fixtures.link) { api.saveSubjectLink(id, fixtures.save) },
             Call("PUT", "/api/links/$id", privateSave, fixtures.ownLink) { api.saveSubjectLink(id, privateSave) },
             Call("DELETE", "/api/links/$id", null, Unit) { api.deleteSubjectLink(id) },
-            Call("PUT", "/api/links/$id/saved", SetLinkSavedRequest(true), fixtures.link) { api.setSubjectLinkSaved(id, SetLinkSavedRequest(true)) },
             Call("PUT", "/api/subjects/42/links/pin", pin, fixtures.links) { api.pinSubjectLink(42, pin) },
             Call("PUT", "/api/subjects/42/links/pin", unpin, fixtures.links.copy(pinnedId = null)) { api.pinSubjectLink(42, unpin) },
             Call("PUT", "/api/links/$id/vote", ResourceVoteRequest(-1), fixtures.link) { api.voteSubjectLink(id, ResourceVoteRequest(-1)) },
@@ -38,7 +37,8 @@ class SubjectLinkApiTest {
             Call("GET", "/api/users/me/restrictions", null, listOf(fixtures.restriction)) { api.myRestrictions() },
         ))
         val removed = setOf("myResources", "subjectResources", "savePersonalResource", "selectSubjectResource", "submitPersonalResource",
-            "withdrawResourceSubmission", "resourceSubmissions", "voteResource", "reportResource", "deletePersonalResource")
+            "withdrawResourceSubmission", "resourceSubmissions", "voteResource", "reportResource", "deletePersonalResource",
+            "setSubjectLinkSaved")
         assertTrue(ItmoWidgetsApi::class.java.methods.none { it.name in removed })
     }
 

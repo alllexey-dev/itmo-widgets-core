@@ -13,12 +13,12 @@ internal object ResourceContractFixtures {
     val user = UserData(123456, "Synthetic user", null, emptyList(), UserCapabilities(false, false, false))
     val link = SubjectLink(id, 42, "Предмет", "2026-1", LinkCategory.SCORES,
         "https://docs.google.com/spreadsheets/d/example#gid=1", "Баллы", LinkVisibility.FLOW, 7103, "ФИЗ ПИИКТ 3.2.1",
-        SubjectLinkStatus.PUBLISHED, null, 2, 1, false, true, false, user, now)
+        SubjectLinkStatus.PUBLISHED, null, 2, 1, false, false, user, now)
     val ownLink = link.copy(id = otherId, category = LinkCategory.CHAT, url = "https://t.me/example", title = null,
         visibility = LinkVisibility.ALL, flowId = null, audienceLabel = null, status = SubjectLinkStatus.REJECTED, reviewNote = "Не по предмету",
-        score = 0, myVote = 0, isMine = true, isSaved = false, author = null)
+        score = 0, myVote = 0, isMine = true, author = null)
     val previousLink = link.copy(periodKey = "2025-1", category = LinkCategory.MATERIALS, visibility = LinkVisibility.ALL,
-        flowId = null, audienceLabel = null, myVote = -1, isSaved = false, reportedByMe = true)
+        flowId = null, audienceLabel = null, myVote = -1, reportedByMe = true)
     val audience = LinkAudience(7103, "ФИЗ ПИИКТ 3.2.1", 2, 3)
     val links = SubjectLinksResponse(listOf(ownLink), listOf(link), listOf(previousLink), id,
         listOf(LinkAudience(7101, "ФИЗ ПИИКТ 3", 1, 1), LinkAudience(7102, "ФИЗ ПИИКТ 3.2", 3, 2), audience), true)

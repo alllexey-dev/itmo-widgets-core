@@ -34,7 +34,6 @@ data class SubjectLink(
     val score: Int,
     val myVote: Int,
     val isMine: Boolean,
-    val isSaved: Boolean,
     val reportedByMe: Boolean,
     val author: UserData?,
     val updatedAt: OffsetDateTime,
@@ -85,8 +84,6 @@ data class SaveSubjectLinkRequest(
     /** Required with FLOW and one of the viewer's flows of the subject and period; null otherwise. */
     val flowId: Long? = null,
 )
-
-data class SetLinkSavedRequest(val saved: Boolean)
 
 /** A null linkId removes the pin for the period. */
 data class PinSubjectLinkRequest(val periodKey: String, val linkId: UUID? = null)

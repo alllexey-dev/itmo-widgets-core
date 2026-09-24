@@ -138,9 +138,6 @@ interface ItmoWidgetsApi {
     @DELETE("/api/links/{id}")
     suspend fun deleteSubjectLink(@Path("id") id: UUID): ApiResponse<Unit>
 
-    @PUT("/api/links/{id}/saved")
-    suspend fun setSubjectLinkSaved(@Path("id") id: UUID, @Body request: SetLinkSavedRequest): ApiResponse<SubjectLink>
-
     @PUT("/api/subjects/{subjectId}/links/pin")
     suspend fun pinSubjectLink(@Path("subjectId") subjectId: Long, @Body request: PinSubjectLinkRequest): ApiResponse<SubjectLinksResponse>
 

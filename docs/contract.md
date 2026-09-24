@@ -71,7 +71,7 @@ live in `model/fcm/impl`.
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData`, `myRoles` |
 | Web sign-in | `webLoginPreview`, `approveWebLogin` |
-| Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `setSubjectLinkSaved`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
+| Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
 | Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
 
@@ -95,7 +95,6 @@ user/moderator routes are covered by `resources/SubjectLinkContractTest` and
 | `subjectLinks` | `GET /api/subjects/{subjectId}/links?period=` | — | `SubjectLinksResponse` |
 | `saveSubjectLink` | `PUT /api/links/{id}` | `SaveSubjectLinkRequest` | `SubjectLink` |
 | `deleteSubjectLink` | `DELETE /api/links/{id}` | — | `Unit` |
-| `setSubjectLinkSaved` | `PUT /api/links/{id}/saved` | `SetLinkSavedRequest` | `SubjectLink` |
 | `pinSubjectLink` | `PUT /api/subjects/{subjectId}/links/pin` | `PinSubjectLinkRequest` | `SubjectLinksResponse` |
 | `voteSubjectLink` | `PUT /api/links/{id}/vote` | `ResourceVoteRequest` | `SubjectLink` |
 | `reportSubjectLink` | `POST /api/links/{id}/report` | `ModerationReportRequest` | `SubjectLink` |

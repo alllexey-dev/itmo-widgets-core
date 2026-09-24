@@ -16,7 +16,7 @@ class SubjectLinkContractTest {
     fun `every public link and moderation DTO round trips`() {
         val values = listOf(fixtures.link, fixtures.ownLink, fixtures.previousLink, fixtures.audience, fixtures.links,
             fixtures.links.copy(pinnedId = null, mine = emptyList(), audiences = emptyList()), fixtures.revision, fixtures.pendingRevision,
-            fixtures.flowRevision, fixtures.save, fixtures.save.copy(title = "Очередь", visibility = LinkVisibility.PRIVATE, flowId = null), SetLinkSavedRequest(false),
+            fixtures.flowRevision, fixtures.save, fixtures.save.copy(title = "Очередь", visibility = LinkVisibility.PRIVATE, flowId = null),
             PinSubjectLinkRequest("2026-1", fixtures.id), PinSubjectLinkRequest("2026-1"), ResourceVoteRequest(-1),
             fixtures.restriction, fixtures.report, fixtures.decision, fixtures.history, fixtures.target, fixtures.case,
             fixtures.case.copy(target = null), fixtures.settings, ModerationPolicy(false, 5, -4, 8, 12),
@@ -29,7 +29,7 @@ class SubjectLinkContractTest {
     @Test
     fun `link models use the exact wire field names`() {
         assertEquals(setOf("id", "subjectId", "subjectName", "periodKey", "category", "url", "title", "visibility", "flowId",
-            "audienceLabel", "status", "reviewNote", "score", "myVote", "isMine", "isSaved", "reportedByMe", "author", "updatedAt"),
+            "audienceLabel", "status", "reviewNote", "score", "myVote", "isMine", "reportedByMe", "author", "updatedAt"),
             gson.toJsonTree(fixtures.link.copy(reviewNote = "Проверено")).asJsonObject.keySet())
         assertEquals(setOf("mine", "shared", "previous", "pinnedId", "audiences", "premoderation"),
             gson.toJsonTree(fixtures.links).asJsonObject.keySet())
@@ -42,7 +42,6 @@ class SubjectLinkContractTest {
         assertEquals(JsonParser.parseString("""{"subjectId":42,"subjectName":"Предмет","periodKey":"2026-1","category":"QUEUE",
             "url":"https://example.org/queue","visibility":"PRIVATE"}"""),
             gson.toJsonTree(fixtures.save.copy(visibility = LinkVisibility.PRIVATE, flowId = null)))
-        assertEquals(JsonParser.parseString("""{"saved":true}"""), gson.toJsonTree(SetLinkSavedRequest(true)))
         assertEquals(JsonParser.parseString("""{"periodKey":"2026-1","linkId":"${fixtures.id}"}"""),
             gson.toJsonTree(PinSubjectLinkRequest("2026-1", fixtures.id)))
         assertEquals(JsonParser.parseString("""{"value":-1}"""), gson.toJsonTree(ResourceVoteRequest(-1)))
@@ -63,6 +62,12 @@ class SubjectLinkContractTest {
         assertNull(gson.fromJson(privateSave.apply { add("flowId", JsonNull.INSTANCE) }, SaveSubjectLinkRequest::class.java).flowId)
         val noPin = gson.toJsonTree(fixtures.links).asJsonObject.apply { add("pinnedId", JsonNull.INSTANCE) }
         assertNull(gson.fromJson(noPin, SubjectLinksResponse::class.java).pinnedId)
+    }
+
+    @Test
+    fun `a link from a backend that still sends isSaved decodes without it`() {
+        val legacy = gson.toJsonTree(fixtures.link).asJsonObject.apply { addProperty("isSaved", true) }
+        assertEquals(fixtures.link, gson.fromJson(legacy, SubjectLink::class.java))
     }
 
     @Test
@@ -93,14 +98,13 @@ class SubjectLinkContractTest {
     fun `required link response restriction and policy fields never become JVM defaults`() {
         val required = listOf(
             Triple(fixtures.link as Any, SubjectLink::class.java, listOf("id", "subjectId", "subjectName", "periodKey", "category", "url",
-                "visibility", "status", "score", "myVote", "isMine", "isSaved", "reportedByMe", "updatedAt")),
+                "visibility", "status", "score", "myVote", "isMine", "reportedByMe", "updatedAt")),
             Triple(fixtures.links as Any, SubjectLinksResponse::class.java, listOf("mine", "shared", "previous", "audiences", "premoderation")),
             Triple(fixtures.audience as Any, LinkAudience::class.java, listOf("flowId", "label", "typeId", "depth")),
             Triple(fixtures.revision as Any, SubjectLinkRevision::class.java, listOf("id", "linkId", "number", "category", "url",
                 "visibility", "status", "submittedAt")),
             Triple(fixtures.target as Any, SubjectLinkTarget::class.java, listOf("revision", "link", "author", "reports", "submitterHistory")),
             Triple(fixtures.save as Any, SaveSubjectLinkRequest::class.java, listOf("subjectId", "subjectName", "periodKey", "category", "url", "visibility")),
-            Triple(SetLinkSavedRequest(true) as Any, SetLinkSavedRequest::class.java, listOf("saved")),
             Triple(PinSubjectLinkRequest("2026-1") as Any, PinSubjectLinkRequest::class.java, listOf("periodKey")),
             Triple(fixtures.restriction as Any, UserRestriction::class.java, listOf("id", "capability", "reason", "startsAt")),
             Triple(ModerationPolicy() as Any, ModerationPolicy::class.java, listOf("premoderation", "reportThreshold", "voteThreshold",
@@ -116,7 +120,7 @@ class SubjectLinkContractTest {
             val malformed = gson.toJsonTree(fixtures.link).asJsonObject.apply { add("score", JsonParser.parseString(wire)) }
             assertFailsWith<JsonParseException> { gson.fromJson(malformed, SubjectLink::class.java) }
         }
-        for (flag in listOf("isMine", "isSaved", "reportedByMe")) {
+        for (flag in listOf("isMine", "reportedByMe")) {
             val malformed = gson.toJsonTree(fixtures.link).asJsonObject.apply { addProperty(flag, "true") }
             assertFailsWith<JsonParseException>(flag) { gson.fromJson(malformed, SubjectLink::class.java) }
         }
