@@ -86,7 +86,7 @@ open class ItmoWidgetsImpl(
 
         myItmo.gson.newBuilder()
             .registerTypeAdapter(Instant::class.java, InstantTypeAdapter())
-            .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter())
+            .registerTypeAdapter(LocalDate::class.java, LocalDateTypeAdapter().nullSafe())
             .registerTypeAdapter(LocalTime::class.java, LocalTimeTypeAdapter())
             .registerTypeAdapter(AppVersionInfo::class.java, AppVersionInfoTypeAdapter().nullSafe())
             .registerTypeAdapter(SharingVisibility::class.java, SharingVisibilityTypeAdapter())
@@ -113,6 +113,7 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapterFactory(SubjectLinkModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(UserRestrictionTypeAdapterFactory())
             .registerTypeAdapterFactory(WebLoginPreviewTypeAdapterFactory())
+            .registerTypeAdapterFactory(TeacherReviewModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(ModerationPolicyTypeAdapterFactory())
             .registerTypeAdapterFactory(ModerationModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(moderationTargetAdapter)

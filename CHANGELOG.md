@@ -4,6 +4,13 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-28: `teacherReviews(isu)` → `TeacherReviewsResponse`
+  (`GET /api/teachers/{isu}/reviews`) with anonymous `ExternalTeacherReview`
+  copies and the provider URL. Strict required fields, UUID/date parsing,
+  integer ranges, duplicate-key rejection and mutually exclusive dates;
+  `LocalDateTypeAdapter().nullSafe()` preserves nullable dates. Contract,
+  MockWebServer route and schedule-date regression tests.
+
 - 2026-09-24: saving another student's link is removed. `setSubjectLinkSaved`
   (`PUT /api/links/{id}/saved`), `SetLinkSavedRequest` and
   `SubjectLink.isSaved` are gone; an `isSaved` key from an older backend is

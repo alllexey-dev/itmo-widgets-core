@@ -43,6 +43,15 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
 - `WebLoginPreview`: `challengeId`, `createdAt` and `expiresAt` are required
   strings that must parse as a UUID and ISO offset timestamps; `userAgent` is
   optional but, when present, a string (`WebLoginPreviewTypeAdapterFactory`).
+- `TeacherReviewsResponse` requires a positive integer `teacherIsu`, string
+  `providerUrl` and non-null `external` array without null entries.
+  `ExternalTeacherReview` requires a UUID-parsable string `id` and string `text`;
+  optional subject/source/date fields accept absence or null but reject wrong
+  primitive shapes. `writtenOn` must parse as an ISO `LocalDate`;
+  `writtenBeforeYear` must be a JSON integer in the `Int` range. They cannot
+  both be set. Duplicate keys fail decoding (`TeacherReviewModelsTypeAdapterFactory`).
+  The shared `LocalDateTypeAdapter` is registered with `nullSafe()` for nullable
+  review dates; schedule request dates keep the same wire representation.
 - `myRoles()` returns plain strings so a role added by a newer server never
   breaks decoding; consumers compare against the names they know.
 
@@ -71,6 +80,7 @@ live in `model/fcm/impl`.
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData`, `myRoles` |
 | Web sign-in | `webLoginPreview`, `approveWebLogin` |
+| Teacher reviews | `teacherReviews` |
 | Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
 | Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
@@ -86,7 +96,23 @@ Semantics of each route are documented in the Backend repository under
 using MockWebServer and synthetic data. Link and moderation models and all
 user/moderator routes are covered by `resources/SubjectLinkContractTest` and
 `resources/SubjectLinkApiTest`. Roles and web sign-in are covered by
-`weblogin/WebLoginContractTest` and `weblogin/WebLoginApiTest`.
+`weblogin/WebLoginContractTest` and `weblogin/WebLoginApiTest`. Teacher review
+models and the GET route are covered by `reviews/TeacherReviewContractTest` and
+`reviews/TeacherReviewApiTest`, including strict decoding and schedule-date
+serialization regression checks.
+
+## Teacher reviews
+
+| Method | Route | Body | Reply |
+|---|---|---|---|
+| `teacherReviews(isu)` | `GET /api/teachers/{isu}/reviews` | — | `TeacherReviewsResponse` |
+
+The reply contains `teacherIsu`, the Reviews teacher page `providerUrl`, and
+`external` anonymous text reviews. Each review has its copy UUID, text and
+optional subject, date or before-year, source title and source link. Own
+reviews and summary fields are reserved for a later extension. The
+[Backend contract](../../itmo-widgets-backend/docs/contracts/teacher-reviews.md)
+defines ordering, authentication and errors.
 
 ## Subject links
 
