@@ -55,6 +55,8 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
     `providerUrl`, a non-null `reviews` array without null entries and the
     booleans `canWrite`, `canVote`, `canReport`, `knownTeacher`; `mine` is
     optional. A response in the replaced shape with `external` fails.
+    `summary` is optional: absent and null both decode to null, any other
+    non-object value fails.
   - `TeacherReview` requires a UUID-parsable `id`, `kind`, `text`, integer
     `score`, `myVote` of -1, 0 or 1 and the booleans `verified` and
     `reportedByMe`. Optional strings reject other shapes; `author` is absent,
@@ -71,8 +73,23 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
     `status` and `submittedAt`; `ModeratedTeacherReview` a positive
     `teacherIsu`, `anonymous`, `status`, `score`, `hidden` and `verification`,
     with an integer `verifiedFlowId` when present.
-  - `TeacherReviewKind`, `TeacherReviewStatus`, `ReviewRevisionStatus` and
-    `ReviewVerification` are strict: unknown names, null and numbers fail.
+  - `TeacherSummary` requires an integer `reviewCount` of at least 3, a string
+    `description`, the arrays `pros`, `cons`, `tags` and `scales`, `level`,
+    `confidence` and `generatedAt`. Entries of `pros`, `cons` and `tags` must be
+    strings; null entries fail. `scales` holds exactly five objects with string
+    `kind` values, each kind once. `generatedAt` must parse as an ISO `Instant`
+    (a local date-time, a bare date or a number fails). `tags` are not an enum:
+    they stay plain strings, so a tag code added by a newer server decodes and
+    consumers skip codes they do not know.
+  - `TeacherSummaryScale` requires `kind` and `value`; `reason` is an optional
+    string and must be absent or null when `value` is `NOT_ENOUGH_DATA`. With
+    another value a null `reason` is accepted.
+  - `TeacherSummaryLevel` requires a positive integer `teacherIsu` and `level`;
+    the ISU range and the 1–50 id limit are checked by Backend.
+  - `TeacherReviewKind`, `TeacherReviewStatus`, `ReviewRevisionStatus`,
+    `ReviewVerification`, `SummaryLevel`, `SummaryConfidence`,
+    `SummaryScaleKind` and `SummaryScaleValue` are strict: unknown names, null
+    and numbers fail.
 
   The shared `LocalDateTypeAdapter` is registered with `nullSafe()` for nullable
   review dates; schedule request dates keep the same wire representation.
@@ -104,7 +121,7 @@ live in `model/fcm/impl`.
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData`, `myRoles` |
 | Web sign-in | `webLoginPreview`, `approveWebLogin` |
-| Teacher reviews | `teacherReviews`, `saveMyTeacherReview`, `deleteMyTeacherReview`, `voteTeacherReview`, `reportTeacherReview` |
+| Teacher reviews | `teacherReviews`, `saveMyTeacherReview`, `deleteMyTeacherReview`, `voteTeacherReview`, `reportTeacherReview`, `teacherSummaryLevels` |
 | Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
 | Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
@@ -121,10 +138,12 @@ using MockWebServer and synthetic data. Link and moderation models and all
 user/moderator routes are covered by `resources/SubjectLinkContractTest` and
 `resources/SubjectLinkApiTest`. Roles and web sign-in are covered by
 `weblogin/WebLoginContractTest` and `weblogin/WebLoginApiTest`. Teacher review
-models and all five routes are covered by `reviews/TeacherReviewContractTest`
-and `reviews/TeacherReviewApiTest` (strict decoding, exact keys, the anonymous
-default, the rejected `external` shape and schedule-date serialization
-regression checks); `reviews/TeacherReviewModerationContractTest` covers
+and summary models and all six routes are covered by
+`reviews/TeacherReviewContractTest` and `reviews/TeacherReviewApiTest` (strict
+decoding, exact keys, the anonymous default, the rejected `external` shape, an
+absent or null `summary`, an unknown tag code kept as a string, rejected
+summaries and levels, the repeated `isu` parameter and schedule-date
+serialization regression checks); `reviews/TeacherReviewModerationContractTest` covers
 TEACHER_REVIEW cases and the review report reasons. Shared fixtures are in
 `reviews/TeacherReviewContractFixtures`.
 
@@ -137,11 +156,13 @@ TEACHER_REVIEW cases and the review report reasons. Shared fixtures are in
 | `deleteMyTeacherReview(isu)` | `DELETE /api/teachers/{isu}/reviews/mine` | — | `TeacherReviewsResponse` |
 | `voteTeacherReview(id, request)` | `PUT /api/reviews/{id}/vote` | `ResourceVoteRequest` | `TeacherReviewsResponse` |
 | `reportTeacherReview(id, request)` | `POST /api/reviews/{id}/report` | `ModerationReportRequest` | `TeacherReviewsResponse` |
+| `teacherSummaryLevels(isus)` | `GET /api/teachers/summary-levels?isu=…` (repeated `isu`) | — | `List<TeacherSummaryLevel>` |
 
-Every method replies with the viewer's reviews of the teacher: `teacherIsu`,
-the Reviews teacher page `providerUrl`, `reviews` in Backend's ranked order,
-the viewer's own `mine` (or null) and the flags `canWrite`, `canVote`,
-`canReport` and `knownTeacher`. A `TeacherReview` is `COMMUNITY` (an own review
+Every method except `teacherSummaryLevels` replies with the viewer's reviews
+of the teacher: `teacherIsu`, the Reviews teacher page `providerUrl`, `reviews`
+in Backend's ranked order, the viewer's own `mine` (or null), the flags
+`canWrite`, `canVote`, `canReport` and `knownTeacher`, and the shown AI
+`summary` (or null). A `TeacherReview` is `COMMUNITY` (an own review
 of a user: `verified`, `reportedByMe`, `author` only when written under the
 name) or `REVIEWS` (a copy: optional source title and link, a date or a
 before-year). `OwnTeacherReview` carries the author's current content,
@@ -153,7 +174,21 @@ that Backend checks itself. `ResourceVoteRequest.value` is -1, 0 or 1; review
 reports use `OFFENSIVE`, `WRONG_TEACHER`, `SPAM` or `OTHER`. The moderation API
 decodes TEACHER_REVIEW cases as `TeacherReviewTarget` with
 `TeacherReviewRevision` and `ModeratedTeacherReview` (`teacherName`,
-`verification`, `verifiedFlowId`). The
+`verification`, `verifiedFlowId`).
+
+`summary` is null when the teacher has no shown summary or an admin hides it.
+A `TeacherSummary` carries `reviewCount` (the reviews the shown summary was
+built from, at least 3; it may lag behind the current reviews until a new
+summary is built), `description`, `pros`, `cons`, `tags` (codes of Backend's
+fixed list as strings), five `TeacherSummaryScale(kind, value, reason)` in
+`SummaryScaleKind` order (`EXPLAINS`, `ATTITUDE`, `FAIRNESS`, `STRICTNESS`,
+`WORKLOAD`; value `LOW`, `MEDIUM`, `HIGH` or `NOT_ENOUGH_DATA` without a
+reason), the tone `level` (`VERY_NEGATIVE`, `NEGATIVE`, `MIXED`, `POSITIVE`,
+`VERY_POSITIVE`), `confidence` (`LOW`, `MEDIUM`, `HIGH`) and `generatedAt`.
+`teacherSummaryLevels(isus)` sends 1–50 distinct ISU ids as repeated `isu`
+parameters and returns `TeacherSummaryLevel(teacherIsu, level)` only for
+teachers whose shown summary has `MEDIUM` or `HIGH` confidence; others are
+absent from the list. The
 [Backend contract](../../itmo-widgets-backend/docs/contracts/teacher-reviews.md)
 defines ordering, limits, authentication and errors.
 

@@ -4,6 +4,19 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-29: AI summaries of teacher reviews. `TeacherReviewsResponse` gains
+  `summary: TeacherSummary?` (default null; absent and null decode to null)
+  with `reviewCount`, `description`, `pros`, `cons`, `tags` as strings, five
+  `TeacherSummaryScale(kind, value, reason)`, `level`, `confidence` and
+  `generatedAt`. `teacherSummaryLevels(isus)` →
+  `List<TeacherSummaryLevel(teacherIsu, level)>`
+  (`GET /api/teachers/summary-levels`, repeated `isu`). Strict decoding:
+  `reviewCount` at least 3, exactly five distinct scales, string list entries,
+  no reason for `NOT_ENOUGH_DATA`, ISO `generatedAt`, positive `teacherIsu`;
+  strict `SummaryLevel`, `SummaryConfidence`, `SummaryScaleKind` and
+  `SummaryScaleValue`, while unknown tag codes decode as strings. Contract and
+  MockWebServer route tests.
+
 - 2026-09-29: own teacher reviews. `saveMyTeacherReview(isu, request)`
   (`PUT /api/teachers/{isu}/reviews/mine`), `deleteMyTeacherReview(isu)`
   (`DELETE …/mine`), `voteTeacherReview(id, ResourceVoteRequest)`
