@@ -1,16 +1,18 @@
 package dev.alllexey.itmowidgets.core.model.resources
 
 import dev.alllexey.itmowidgets.core.model.UserData
+import dev.alllexey.itmowidgets.core.model.reviews.ModeratedTeacherReview
+import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewRevision
 import java.time.OffsetDateTime
 import java.util.UUID
 
-/** TEACHER_REVIEW is reserved for the future review feature, not produced by this Backend version. */
 enum class ModerationTargetType { SUBJECT_RESOURCE, TEACHER_REVIEW }
 enum class ModerationCaseStatus { OPEN, RESOLVED, WITHDRAWN }
 enum class ModerationCaseReason { SUBMISSION, REPORTS, VOTES }
 enum class ModerationActor { MODERATOR, POLICY }
 enum class ModerationAction { APPROVE, REJECT, HIDE, RESTORE, DISMISS, RESTRICT_USER, HIDE_ALL_BY_USER }
-enum class ReportReason { BROKEN, WRONG_SUBJECT, SPAM, OTHER }
+/** Links accept BROKEN, WRONG_SUBJECT, SPAM and OTHER; teacher reviews accept OFFENSIVE, WRONG_TEACHER, SPAM and OTHER. */
+enum class ReportReason { BROKEN, WRONG_SUBJECT, SPAM, OTHER, OFFENSIVE, WRONG_TEACHER }
 
 /** Unknown future capabilities decode conservatively as ALL; missing/null values remain invalid. */
 enum class RestrictionCapability { SUBMIT_RESOURCES, VOTE, REPORT, WRITE_REVIEWS, ALL }
@@ -19,7 +21,7 @@ enum class RestrictionCapability { SUBMIT_RESOURCES, VOTE, REPORT, WRITE_REVIEWS
 data class UserRestriction(val id: UUID, val capability: RestrictionCapability, val reason: String,
     val startsAt: OffsetDateTime, val expiresAt: OffsetDateTime?)
 
-/** A null target means the reviewed link was deleted; the case and its decisions remain for audit. */
+/** A null target means the reviewed link or review was deleted; the case and its decisions remain for audit. */
 data class ModerationCase(val id: UUID, val targetType: ModerationTargetType, val status: ModerationCaseStatus,
     val reason: ModerationCaseReason, val openedAt: OffsetDateTime, val target: ModerationCaseTarget?,
     val decisions: List<ModerationDecision>)
@@ -29,6 +31,13 @@ sealed interface ModerationCaseTarget
 
 /** Wire targetType SUBJECT_RESOURCE: the reviewed revision, the link as the moderator sees it and its author. */
 data class SubjectLinkTarget(val revision: SubjectLinkRevision, val link: SubjectLink, val author: UserData,
+    val reports: List<ModerationReport>, val submitterHistory: SubmitterHistory) : ModerationCaseTarget
+
+/**
+ * Wire targetType TEACHER_REVIEW: the reviewed revision, the review as the moderator sees it and its author.
+ * [author] is shown to moderators even for an anonymous review.
+ */
+data class TeacherReviewTarget(val revision: TeacherReviewRevision, val review: ModeratedTeacherReview, val author: UserData,
     val reports: List<ModerationReport>, val submitterHistory: SubmitterHistory) : ModerationCaseTarget
 
 data class SubmitterHistory(val approved: Long, val rejected: Long, val dismissedReports: Long,

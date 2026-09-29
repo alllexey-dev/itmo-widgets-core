@@ -3,6 +3,10 @@ package dev.alllexey.itmowidgets.core
 import api.myitmo.MyItmo
 import com.google.gson.Gson
 import dev.alllexey.itmowidgets.core.model.resources.*
+import dev.alllexey.itmowidgets.core.model.reviews.ReviewRevisionStatus
+import dev.alllexey.itmowidgets.core.model.reviews.ReviewVerification
+import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewKind
+import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewStatus
 import dev.alllexey.itmowidgets.core.utils.*
 import dev.alllexey.itmowidgets.core.utils.FriendshipEventPayloadTypeAdapterFactory
 import dev.alllexey.itmowidgets.core.model.social.RelationshipState
@@ -82,6 +86,7 @@ open class ItmoWidgetsImpl(
         val moderationTargetAdapter = RuntimeTypeAdapterFactory
             .of(ModerationCaseTarget::class.java, "targetType")
             .registerSubtype(SubjectLinkTarget::class.java, "SUBJECT_RESOURCE")
+            .registerSubtype(TeacherReviewTarget::class.java, "TEACHER_REVIEW")
             .recognizeSubtypes()
 
         myItmo.gson.newBuilder()
@@ -110,6 +115,10 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(ModerationTargetType::class.java, ModerationTargetTypeTypeAdapter())
             .registerTypeAdapter(ModerationCaseStatus::class.java, ModerationCaseStatusTypeAdapter())
             .registerTypeAdapter(ModerationCaseReason::class.java, ModerationCaseReasonTypeAdapter())
+            .registerTypeAdapter(TeacherReviewKind::class.java, TeacherReviewKindTypeAdapter())
+            .registerTypeAdapter(TeacherReviewStatus::class.java, TeacherReviewStatusTypeAdapter())
+            .registerTypeAdapter(ReviewRevisionStatus::class.java, ReviewRevisionStatusTypeAdapter())
+            .registerTypeAdapter(ReviewVerification::class.java, ReviewVerificationTypeAdapter())
             .registerTypeAdapterFactory(SubjectLinkModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(UserRestrictionTypeAdapterFactory())
             .registerTypeAdapterFactory(WebLoginPreviewTypeAdapterFactory())

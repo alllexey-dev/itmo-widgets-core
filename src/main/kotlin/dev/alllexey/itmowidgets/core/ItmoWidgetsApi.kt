@@ -1,6 +1,7 @@
 package dev.alllexey.itmowidgets.core
 
 import dev.alllexey.itmowidgets.core.model.*
+import dev.alllexey.itmowidgets.core.model.reviews.SaveTeacherReviewRequest
 import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewsResponse
 import dev.alllexey.itmowidgets.core.model.social.UserProfile
 import dev.alllexey.itmowidgets.core.model.social.UserLookupRequest
@@ -154,6 +155,18 @@ interface ItmoWidgetsApi {
 
     @GET("/api/teachers/{isu}/reviews")
     suspend fun teacherReviews(@Path("isu") isu: Int): ApiResponse<TeacherReviewsResponse>
+
+    @PUT("/api/teachers/{isu}/reviews/mine")
+    suspend fun saveMyTeacherReview(@Path("isu") isu: Int, @Body request: SaveTeacherReviewRequest): ApiResponse<TeacherReviewsResponse>
+
+    @DELETE("/api/teachers/{isu}/reviews/mine")
+    suspend fun deleteMyTeacherReview(@Path("isu") isu: Int): ApiResponse<TeacherReviewsResponse>
+
+    @PUT("/api/reviews/{id}/vote")
+    suspend fun voteTeacherReview(@Path("id") id: UUID, @Body request: ResourceVoteRequest): ApiResponse<TeacherReviewsResponse>
+
+    @POST("/api/reviews/{id}/report")
+    suspend fun reportTeacherReview(@Path("id") id: UUID, @Body request: ModerationReportRequest): ApiResponse<TeacherReviewsResponse>
 
     // endregion reviews
 

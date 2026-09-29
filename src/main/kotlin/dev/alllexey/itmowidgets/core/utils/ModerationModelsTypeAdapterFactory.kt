@@ -7,6 +7,7 @@ import dev.alllexey.itmowidgets.core.model.resources.*
 class ModerationModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFactory(mapOf(
     ModerationCase::class.java to mapOf("id" to 's', "targetType" to 's', "status" to 's', "reason" to 's', "openedAt" to 's', "decisions" to 'a'),
     SubjectLinkTarget::class.java to mapOf("revision" to 'o', "link" to 'o', "author" to 'o', "reports" to 'a', "submitterHistory" to 'o'),
+    TeacherReviewTarget::class.java to mapOf("revision" to 'o', "review" to 'o', "author" to 'o', "reports" to 'a', "submitterHistory" to 'o'),
     SubmitterHistory::class.java to mapOf("approved" to 'n', "rejected" to 'n', "dismissedReports" to 'n', "activeRestrictions" to 'a'),
     ModerationDecision::class.java to mapOf("id" to 's', "actor" to 's', "action" to 's', "createdAt" to 's'),
     ModerationSettings::class.java to mapOf("policies" to 'm'),
