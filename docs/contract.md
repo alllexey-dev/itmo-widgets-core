@@ -36,20 +36,44 @@ Kotlin non-null contract Gson's reflective adapter could bypass:
   newer server cannot accidentally enable an action on an older client. Missing,
   null or non-string capabilities still fail. This is the only enum fallback.
 - `ModerationPolicy`: all five fields are required on the wire despite local
-  constructor defaults. `ModerationCaseTarget` is polymorphic on `targetType`;
-  only SUBJECT_RESOURCE (`SubjectLinkTarget`) is implemented. TEACHER_REVIEW is
-  reserved in the enum. The target is nullable because a deleted link leaves its
-  case for audit; other case fields and decisions remain required.
+  constructor defaults. `ModerationCaseTarget` is polymorphic on `targetType`:
+  SUBJECT_RESOURCE is `SubjectLinkTarget`, TEACHER_REVIEW is
+  `TeacherReviewTarget` (`revision`, `review`, `author`, `reports`,
+  `submitterHistory`, all required). The target is nullable because a deleted
+  link or review leaves its case for audit; other case fields and decisions
+  remain required. `ReportReason` holds the link reasons (`BROKEN`,
+  `WRONG_SUBJECT`, `SPAM`, `OTHER`) and the review reasons (`OFFENSIVE`,
+  `WRONG_TEACHER`, `SPAM`, `OTHER`) in one strict enum; Backend refuses a reason
+  of the other kind.
 - `WebLoginPreview`: `challengeId`, `createdAt` and `expiresAt` are required
   strings that must parse as a UUID and ISO offset timestamps; `userAgent` is
   optional but, when present, a string (`WebLoginPreviewTypeAdapterFactory`).
-- `TeacherReviewsResponse` requires a positive integer `teacherIsu`, string
-  `providerUrl` and non-null `external` array without null entries.
-  `ExternalTeacherReview` requires a UUID-parsable string `id` and string `text`;
-  optional subject/source/date fields accept absence or null but reject wrong
-  primitive shapes. `writtenOn` must parse as an ISO `LocalDate`;
-  `writtenBeforeYear` must be a JSON integer in the `Int` range. They cannot
-  both be set. Duplicate keys fail decoding (`TeacherReviewModelsTypeAdapterFactory`).
+- Teacher review models (`TeacherReviewModelsTypeAdapterFactory`): required
+  fields, primitive shapes, integer ranges and duplicate keys are checked before
+  reflection, in nested objects too.
+  - `TeacherReviewsResponse` requires a positive integer `teacherIsu`, string
+    `providerUrl`, a non-null `reviews` array without null entries and the
+    booleans `canWrite`, `canVote`, `canReport`, `knownTeacher`; `mine` is
+    optional. A response in the replaced shape with `external` fails.
+  - `TeacherReview` requires a UUID-parsable `id`, `kind`, `text`, integer
+    `score`, `myVote` of -1, 0 or 1 and the booleans `verified` and
+    `reportedByMe`. Optional strings reject other shapes; `author` is absent,
+    null or an object. `writtenOn` must parse as an ISO `LocalDate`,
+    `writtenBeforeYear` must be a JSON integer in the `Int` range, and they
+    cannot both be set. A `COMMUNITY` review has no source and no before-year;
+    a `REVIEWS` copy has no author and is neither verified nor reported.
+  - `OwnTeacherReview` requires `id`, `text`, `anonymous`, `status`, `score`,
+    `verified` and an ISO `writtenOn`.
+  - `SaveTeacherReviewRequest` requires `text`, `anonymous` and `flowIds`
+    (JSON integers in the `Long` range) when read: Gson does not apply Kotlin
+    defaults, and a missing `anonymous` must never reveal a name.
+  - `TeacherReviewRevision` requires UUIDs, a positive `number`, `text`,
+    `status` and `submittedAt`; `ModeratedTeacherReview` a positive
+    `teacherIsu`, `anonymous`, `status`, `score`, `hidden` and `verification`,
+    with an integer `verifiedFlowId` when present.
+  - `TeacherReviewKind`, `TeacherReviewStatus`, `ReviewRevisionStatus` and
+    `ReviewVerification` are strict: unknown names, null and numbers fail.
+
   The shared `LocalDateTypeAdapter` is registered with `nullSafe()` for nullable
   review dates; schedule request dates keep the same wire representation.
 - `myRoles()` returns plain strings so a role added by a newer server never
@@ -80,7 +104,7 @@ live in `model/fcm/impl`.
 | Friends | `sendFriendRequest`, `acceptFriendRequest`, `rejectFriendRequest`, `cancelFriendRequest`, `removeFriend`, `friends`, `incomingFriendRequests`, `outgoingFriendRequests` |
 | Users | `userFriends`, `userProfile`, `lookupUsers`, `myPrivacySettings`, `updateMyPrivacySettings`, `updateIdTokenData`, `myUserData`, `myRoles` |
 | Web sign-in | `webLoginPreview`, `approveWebLogin` |
-| Teacher reviews | `teacherReviews` |
+| Teacher reviews | `teacherReviews`, `saveMyTeacherReview`, `deleteMyTeacherReview`, `voteTeacherReview`, `reportTeacherReview` |
 | Subject links | `subjectLinks`, `saveSubjectLink`, `deleteSubjectLink`, `pinSubjectLink`, `voteSubjectLink`, `reportSubjectLink`, `myRestrictions` |
 | Moderation (separate `ItmoWidgetsModerationApi`) | `moderationCases`, `decide`, `userRestrictions`, `revokeRestriction`, `moderationSettings`, `updateModerationSettings` |
 | Sport | `syncSportLessons`, `friendsSportBookings`, `userSportBookings`, free-sign and auto-sign entry, queue and limit calls |
@@ -97,22 +121,41 @@ using MockWebServer and synthetic data. Link and moderation models and all
 user/moderator routes are covered by `resources/SubjectLinkContractTest` and
 `resources/SubjectLinkApiTest`. Roles and web sign-in are covered by
 `weblogin/WebLoginContractTest` and `weblogin/WebLoginApiTest`. Teacher review
-models and the GET route are covered by `reviews/TeacherReviewContractTest` and
-`reviews/TeacherReviewApiTest`, including strict decoding and schedule-date
-serialization regression checks.
+models and all five routes are covered by `reviews/TeacherReviewContractTest`
+and `reviews/TeacherReviewApiTest` (strict decoding, exact keys, the anonymous
+default, the rejected `external` shape and schedule-date serialization
+regression checks); `reviews/TeacherReviewModerationContractTest` covers
+TEACHER_REVIEW cases and the review report reasons. Shared fixtures are in
+`reviews/TeacherReviewContractFixtures`.
 
 ## Teacher reviews
 
 | Method | Route | Body | Reply |
 |---|---|---|---|
 | `teacherReviews(isu)` | `GET /api/teachers/{isu}/reviews` | — | `TeacherReviewsResponse` |
+| `saveMyTeacherReview(isu, request)` | `PUT /api/teachers/{isu}/reviews/mine` | `SaveTeacherReviewRequest` | `TeacherReviewsResponse` |
+| `deleteMyTeacherReview(isu)` | `DELETE /api/teachers/{isu}/reviews/mine` | — | `TeacherReviewsResponse` |
+| `voteTeacherReview(id, request)` | `PUT /api/reviews/{id}/vote` | `ResourceVoteRequest` | `TeacherReviewsResponse` |
+| `reportTeacherReview(id, request)` | `POST /api/reviews/{id}/report` | `ModerationReportRequest` | `TeacherReviewsResponse` |
 
-The reply contains `teacherIsu`, the Reviews teacher page `providerUrl`, and
-`external` anonymous text reviews. Each review has its copy UUID, text and
-optional subject, date or before-year, source title and source link. Own
-reviews and summary fields are reserved for a later extension. The
+Every method replies with the viewer's reviews of the teacher: `teacherIsu`,
+the Reviews teacher page `providerUrl`, `reviews` in Backend's ranked order,
+the viewer's own `mine` (or null) and the flags `canWrite`, `canVote`,
+`canReport` and `knownTeacher`. A `TeacherReview` is `COMMUNITY` (an own review
+of a user: `verified`, `reportedByMe`, `author` only when written under the
+name) or `REVIEWS` (a copy: optional source title and link, a date or a
+before-year). `OwnTeacherReview` carries the author's current content,
+`anonymous`, the status `PENDING`, `PUBLISHED`, `REJECTED` or `HIDDEN` with
+`reviewNote`, `score`, `verified` and `writtenOn`.
+`SaveTeacherReviewRequest(subjectTitle, text, anonymous = true, flowIds =
+emptyList())` creates or edits the review; `flowIds` are candidate ISU flows
+that Backend checks itself. `ResourceVoteRequest.value` is -1, 0 or 1; review
+reports use `OFFENSIVE`, `WRONG_TEACHER`, `SPAM` or `OTHER`. The moderation API
+decodes TEACHER_REVIEW cases as `TeacherReviewTarget` with
+`TeacherReviewRevision` and `ModeratedTeacherReview` (`teacherName`,
+`verification`, `verifiedFlowId`). The
 [Backend contract](../../itmo-widgets-backend/docs/contracts/teacher-reviews.md)
-defines ordering, authentication and errors.
+defines ordering, limits, authentication and errors.
 
 ## Subject links
 

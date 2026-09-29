@@ -4,6 +4,22 @@
 
 Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
 
+- 2026-09-29: own teacher reviews. `saveMyTeacherReview(isu, request)`
+  (`PUT /api/teachers/{isu}/reviews/mine`), `deleteMyTeacherReview(isu)`
+  (`DELETE …/mine`), `voteTeacherReview(id, ResourceVoteRequest)`
+  (`PUT /api/reviews/{id}/vote`) and `reportTeacherReview(id,
+  ModerationReportRequest)` (`POST /api/reviews/{id}/report`), each replying
+  with `TeacherReviewsResponse`. The response replaces `external` and
+  `ExternalTeacherReview` with the ranked `reviews: List<TeacherReview>`
+  (`kind` `COMMUNITY` or `REVIEWS`, `score`, `myVote`, `verified`,
+  `reportedByMe`, optional `author`) and adds `mine: OwnTeacherReview?`,
+  `canWrite`, `canVote`, `canReport` and `knownTeacher`;
+  `SaveTeacherReviewRequest` is anonymous by default. `ReportReason` gains
+  `OFFENSIVE` and `WRONG_TEACHER`; moderation decodes `TEACHER_REVIEW` cases as
+  `TeacherReviewTarget` with `TeacherReviewRevision` and
+  `ModeratedTeacherReview`. Strict decoding of the new models and enums;
+  contract, MockWebServer route and moderation tests.
+
 - 2026-09-28: `teacherReviews(isu)` → `TeacherReviewsResponse`
   (`GET /api/teachers/{isu}/reviews`) with anonymous `ExternalTeacherReview`
   copies and the provider URL. Strict required fields, UUID/date parsing,
