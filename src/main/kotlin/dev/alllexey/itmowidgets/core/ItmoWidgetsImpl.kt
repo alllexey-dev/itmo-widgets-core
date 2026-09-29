@@ -5,6 +5,10 @@ import com.google.gson.Gson
 import dev.alllexey.itmowidgets.core.model.resources.*
 import dev.alllexey.itmowidgets.core.model.reviews.ReviewRevisionStatus
 import dev.alllexey.itmowidgets.core.model.reviews.ReviewVerification
+import dev.alllexey.itmowidgets.core.model.reviews.SummaryConfidence
+import dev.alllexey.itmowidgets.core.model.reviews.SummaryLevel
+import dev.alllexey.itmowidgets.core.model.reviews.SummaryScaleKind
+import dev.alllexey.itmowidgets.core.model.reviews.SummaryScaleValue
 import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewKind
 import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewStatus
 import dev.alllexey.itmowidgets.core.utils.*
@@ -119,6 +123,10 @@ open class ItmoWidgetsImpl(
             .registerTypeAdapter(TeacherReviewStatus::class.java, TeacherReviewStatusTypeAdapter())
             .registerTypeAdapter(ReviewRevisionStatus::class.java, ReviewRevisionStatusTypeAdapter())
             .registerTypeAdapter(ReviewVerification::class.java, ReviewVerificationTypeAdapter())
+            .registerTypeAdapter(SummaryLevel::class.java, SummaryLevelTypeAdapter())
+            .registerTypeAdapter(SummaryConfidence::class.java, SummaryConfidenceTypeAdapter())
+            .registerTypeAdapter(SummaryScaleKind::class.java, SummaryScaleKindTypeAdapter())
+            .registerTypeAdapter(SummaryScaleValue::class.java, SummaryScaleValueTypeAdapter())
             .registerTypeAdapterFactory(SubjectLinkModelsTypeAdapterFactory())
             .registerTypeAdapterFactory(UserRestrictionTypeAdapterFactory())
             .registerTypeAdapterFactory(WebLoginPreviewTypeAdapterFactory())

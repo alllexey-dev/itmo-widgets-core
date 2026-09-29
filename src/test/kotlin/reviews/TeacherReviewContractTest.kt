@@ -5,6 +5,7 @@ import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
+import com.google.gson.JsonPrimitive
 import dev.alllexey.itmowidgets.core.ItmoWidgetsImpl
 import dev.alllexey.itmowidgets.core.model.LessonSyncRequest
 import dev.alllexey.itmowidgets.core.model.reviews.*
@@ -50,15 +51,22 @@ class TeacherReviewContractTest {
             fixtures.mine.copy(subjectTitle = null, status = TeacherReviewStatus.PUBLISHED, reviewNote = null, verified = true),
             fixtures.save, SaveTeacherReviewRequest(text = fixtures.TEXT), fixtures.revision, fixtures.approved,
             fixtures.moderated, fixtures.moderated.copy(teacherName = null, shown = null,
-                verification = ReviewVerification.PENDING, verifiedFlowId = null))
+                verification = ReviewVerification.PENDING, verifiedFlowId = null),
+            fixtures.response.copy(summary = fixtures.summary), fixtures.summary,
+            fixtures.summary.copy(pros = emptyList(), cons = emptyList(), tags = emptyList()),
+            TeacherSummaryLevel(123456, SummaryLevel.VERY_NEGATIVE))
         for (value in values) assertEquals(value, gson.fromJson(gson.toJson(value), value.javaClass), value.javaClass.simpleName)
     }
 
     @Test
     fun `review models use the exact wire keys`() {
         val withNulls = gson.newBuilder().serializeNulls().create()
-        assertEquals(setOf("teacherIsu", "providerUrl", "reviews", "mine", "canWrite", "canVote", "canReport", "knownTeacher"),
-            withNulls.toJsonTree(fixtures.response).asJsonObject.keySet())
+        assertEquals(setOf("teacherIsu", "providerUrl", "reviews", "mine", "canWrite", "canVote", "canReport", "knownTeacher",
+            "summary"), withNulls.toJsonTree(fixtures.response).asJsonObject.keySet())
+        assertEquals(setOf("reviewCount", "description", "pros", "cons", "tags", "scales", "level", "confidence", "generatedAt"),
+            gson.toJsonTree(fixtures.summary).asJsonObject.keySet())
+        assertEquals(setOf("kind", "value", "reason"), withNulls.toJsonTree(fixtures.summary.scales[2]).asJsonObject.keySet())
+        assertEquals(setOf("teacherIsu", "level"), gson.toJsonTree(TeacherSummaryLevel(123456, SummaryLevel.MIXED)).asJsonObject.keySet())
         assertEquals(REVIEW_KEYS, withNulls.toJsonTree(fixtures.anonymous).asJsonObject.keySet())
         assertEquals(setOf("id", "subjectTitle", "text", "anonymous", "status", "reviewNote", "score", "verified", "writtenOn"),
             withNulls.toJsonTree(fixtures.mine).asJsonObject.keySet())
@@ -72,6 +80,73 @@ class TeacherReviewContractTest {
             "verification", "verifiedFlowId"), withNulls.toJsonTree(fixtures.moderated).asJsonObject.keySet())
         assertEquals(JsonParser.parseString("""{"subjectTitle":"Математика","text":"${fixtures.TEXT}","anonymous":false,
             "flowIds":[93724,93725]}"""), gson.toJsonTree(fixtures.save))
+    }
+
+    @Test
+    fun `a response without a summary or with a null summary has none`() {
+        val base = gson.toJsonTree(fixtures.response).asJsonObject.apply { remove("summary") }
+        assertNull(gson.fromJson(base, TeacherReviewsResponse::class.java).summary)
+        val explicitNull = base.deepCopy().apply { add("summary", JsonNull.INSTANCE) }
+        assertNull(gson.fromJson(explicitNull, TeacherReviewsResponse::class.java).summary)
+    }
+
+    @Test
+    fun `a Backend shaped summary decodes with unknown tags kept as strings`() {
+        val wire = gson.toJsonTree(fixtures.response).asJsonObject.apply {
+            add("summary", JsonParser.parseString(fixtures.SUMMARY_JSON))
+        }
+
+        val decoded = gson.fromJson(wire, TeacherReviewsResponse::class.java)
+
+        assertEquals(fixtures.response.copy(summary = fixtures.summary), decoded)
+        assertEquals(listOf("MANY_LABS", "NEW_TAG"), decoded.summary?.tags)
+        assertNull(decoded.summary?.scales?.single { it.value == SummaryScaleValue.NOT_ENOUGH_DATA }?.reason)
+    }
+
+    @Test
+    fun `summaries that break the contract are rejected`() {
+        val invalid = mapOf<String, JsonObject.() -> Unit>(
+            "reviewCount 2" to { addProperty("reviewCount", 2) },
+            "four scales" to { getAsJsonArray("scales").remove(4) },
+            "six scales" to { getAsJsonArray("scales").add(getAsJsonArray("scales")[0].deepCopy()) },
+            "repeated kind" to { getAsJsonArray("scales")[4].asJsonObject.addProperty("kind", "EXPLAINS") },
+            "unknown kind" to { getAsJsonArray("scales")[4].asJsonObject.addProperty("kind", "HUMOUR") },
+            "unknown scale value" to { getAsJsonArray("scales")[4].asJsonObject.addProperty("value", "EXTREME") },
+            "scale kind as a number" to { getAsJsonArray("scales")[4].asJsonObject.addProperty("kind", 4) },
+            "scale as a string" to { getAsJsonArray("scales").set(4, JsonPrimitive("WORKLOAD")) },
+            "reason without data" to { getAsJsonArray("scales")[2].asJsonObject.addProperty("reason", "Мало отзывов") },
+            "reason as a number" to { getAsJsonArray("scales")[0].asJsonObject.addProperty("reason", 1) },
+            "unknown level" to { addProperty("level", "NEUTRAL") },
+            "unknown confidence" to { addProperty("confidence", "CERTAIN") },
+            "numeric tag" to { add("tags", JsonParser.parseString("[1]")) },
+            "null tag" to { add("tags", JsonParser.parseString("[null]")) },
+            "numeric pro" to { add("pros", JsonParser.parseString("[1]")) },
+            "object con" to { add("cons", JsonParser.parseString("[{}]")) },
+            "local generatedAt" to { addProperty("generatedAt", "2026-09-29T09:00:00") },
+            "date generatedAt" to { addProperty("generatedAt", "2026-09-29") },
+            "numeric generatedAt" to { addProperty("generatedAt", 1790000000) },
+        )
+        for ((name, change) in invalid) {
+            val summary = JsonParser.parseString(fixtures.SUMMARY_JSON).asJsonObject.apply(change)
+            assertFailsWith<JsonParseException>(name) { gson.fromJson(summary, TeacherSummary::class.java) }
+            val response = gson.toJsonTree(fixtures.response).asJsonObject.apply { add("summary", summary) }
+            assertFailsWith<JsonParseException>("response: $name") { gson.fromJson(response, TeacherReviewsResponse::class.java) }
+        }
+        for (wire in listOf("\"summary\"", "[]", "42", "true")) {
+            val response = gson.toJsonTree(fixtures.response).asJsonObject.apply { add("summary", JsonParser.parseString(wire)) }
+            assertFailsWith<JsonParseException>("summary: $wire") { gson.fromJson(response, TeacherReviewsResponse::class.java) }
+        }
+    }
+
+    @Test
+    fun `summary levels are strict`() {
+        assertEquals(TeacherSummaryLevel(123456, SummaryLevel.VERY_POSITIVE),
+            gson.fromJson("""{"teacherIsu":123456,"level":"VERY_POSITIVE"}""", TeacherSummaryLevel::class.java))
+        for (wire in listOf("""{"teacherIsu":123456,"level":"NEUTRAL"}""", """{"teacherIsu":123456,"level":null}""",
+            """{"teacherIsu":123456}""", """{"level":"MIXED"}""", """{"teacherIsu":0,"level":"MIXED"}""",
+            """{"teacherIsu":"123456","level":"MIXED"}""", """{"teacherIsu":123456,"level":"MIXED","level":"MIXED"}""")) {
+            assertFailsWith<JsonParseException>(wire) { gson.fromJson(wire, TeacherSummaryLevel::class.java) }
+        }
     }
 
     @Test
@@ -112,6 +187,10 @@ class TeacherReviewContractTest {
             fixtures.save to listOf("text", "anonymous", "flowIds"),
             fixtures.revision to listOf("id", "reviewId", "number", "text", "status", "submittedAt"),
             fixtures.moderated to listOf("id", "teacherIsu", "anonymous", "status", "score", "hidden", "verification"),
+            fixtures.summary to listOf("reviewCount", "description", "pros", "cons", "tags", "scales", "level", "confidence",
+                "generatedAt"),
+            fixtures.summary.scales[0] to listOf("kind", "value"),
+            TeacherSummaryLevel(123456, SummaryLevel.MIXED) to listOf("teacherIsu", "level"),
         )
         for ((model, names) in required) for (name in names) {
             val type = model.javaClass
@@ -182,7 +261,8 @@ class TeacherReviewContractTest {
     @Test
     fun `review enums are strict`() {
         for (type in listOf(TeacherReviewKind::class.java, TeacherReviewStatus::class.java, ReviewRevisionStatus::class.java,
-            ReviewVerification::class.java)) {
+            ReviewVerification::class.java, SummaryLevel::class.java, SummaryConfidence::class.java, SummaryScaleKind::class.java,
+            SummaryScaleValue::class.java)) {
             for (value in type.enumConstants) assertEquals(value, gson.fromJson(gson.toJson(value), type))
             for (wire in listOf("\"UNKNOWN\"", "null", "0", "true", "{}", "[]")) {
                 assertFailsWith<JsonParseException>("${type.simpleName}: $wire") { gson.fromJson(wire, type) }
@@ -220,7 +300,8 @@ class TeacherReviewContractTest {
     @Test
     fun `review models reject non-object JSON roots`() {
         for (type in listOf(TeacherReviewsResponse::class.java, TeacherReview::class.java, OwnTeacherReview::class.java,
-            SaveTeacherReviewRequest::class.java, TeacherReviewRevision::class.java, ModeratedTeacherReview::class.java)) {
+            SaveTeacherReviewRequest::class.java, TeacherReviewRevision::class.java, ModeratedTeacherReview::class.java,
+            TeacherSummary::class.java, TeacherSummaryScale::class.java, TeacherSummaryLevel::class.java)) {
             for (wire in listOf("[]", "\"review\"", "42", "true")) {
                 assertFailsWith<JsonParseException>("${type.simpleName}: $wire") { gson.fromJson(wire, type) }
             }

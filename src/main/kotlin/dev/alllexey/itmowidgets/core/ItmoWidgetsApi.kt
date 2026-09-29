@@ -3,6 +3,7 @@ package dev.alllexey.itmowidgets.core
 import dev.alllexey.itmowidgets.core.model.*
 import dev.alllexey.itmowidgets.core.model.reviews.SaveTeacherReviewRequest
 import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewsResponse
+import dev.alllexey.itmowidgets.core.model.reviews.TeacherSummaryLevel
 import dev.alllexey.itmowidgets.core.model.social.UserProfile
 import dev.alllexey.itmowidgets.core.model.social.UserLookupRequest
 import dev.alllexey.itmowidgets.core.model.social.UserLookupResponse
@@ -167,6 +168,13 @@ interface ItmoWidgetsApi {
 
     @POST("/api/reviews/{id}/report")
     suspend fun reportTeacherReview(@Path("id") id: UUID, @Body request: ModerationReportRequest): ApiResponse<TeacherReviewsResponse>
+
+    /**
+     * Tones of shown AI summaries for 1–50 distinct ISU ids, sent as repeated `isu` parameters. Teachers without a
+     * summary or with a low-confidence one are absent from the reply.
+     */
+    @GET("/api/teachers/summary-levels")
+    suspend fun teacherSummaryLevels(@Query("isu") isus: List<Int>): ApiResponse<List<TeacherSummaryLevel>>
 
     // endregion reviews
 

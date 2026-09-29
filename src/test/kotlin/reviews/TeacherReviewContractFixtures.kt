@@ -4,6 +4,7 @@ import dev.alllexey.itmowidgets.core.model.UserCapabilities
 import dev.alllexey.itmowidgets.core.model.UserData
 import dev.alllexey.itmowidgets.core.model.resources.*
 import dev.alllexey.itmowidgets.core.model.reviews.*
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
@@ -32,6 +33,26 @@ internal object TeacherReviewContractFixtures {
         LocalDate.of(2026, 9, 28))
     val response = TeacherReviewsResponse(TEACHER, PROVIDER_URL, listOf(named, anonymous, copy), mine,
         canWrite = true, canVote = true, canReport = true, knownTeacher = true)
+    val summary = TeacherSummary(5, "Студенты пишут о понятных лекциях и строгой защите лабораторных.",
+        listOf("Понятно объясняет"), listOf("Строгая защита"), listOf("MANY_LABS", "NEW_TAG"), listOf(
+            TeacherSummaryScale(SummaryScaleKind.EXPLAINS, SummaryScaleValue.HIGH, "Лекции понятные"),
+            TeacherSummaryScale(SummaryScaleKind.ATTITUDE, SummaryScaleValue.MEDIUM, "Спокойно отвечает на вопросы"),
+            TeacherSummaryScale(SummaryScaleKind.FAIRNESS, SummaryScaleValue.NOT_ENOUGH_DATA, null),
+            TeacherSummaryScale(SummaryScaleKind.STRICTNESS, SummaryScaleValue.HIGH, "Строго принимает лабораторные"),
+            TeacherSummaryScale(SummaryScaleKind.WORKLOAD, SummaryScaleValue.LOW, "Заданий немного"),
+        ), SummaryLevel.POSITIVE, SummaryConfidence.MEDIUM, Instant.parse("2026-09-29T09:00:00Z"))
+
+    /** Backend's `TeacherSummary` as `GET /api/teachers/{isu}/reviews` sends it; `NEW_TAG` is unknown to Android. */
+    const val SUMMARY_JSON = """{"reviewCount":5,
+        "description":"Студенты пишут о понятных лекциях и строгой защите лабораторных.",
+        "pros":["Понятно объясняет"],"cons":["Строгая защита"],"tags":["MANY_LABS","NEW_TAG"],
+        "scales":[{"kind":"EXPLAINS","value":"HIGH","reason":"Лекции понятные"},
+            {"kind":"ATTITUDE","value":"MEDIUM","reason":"Спокойно отвечает на вопросы"},
+            {"kind":"FAIRNESS","value":"NOT_ENOUGH_DATA","reason":null},
+            {"kind":"STRICTNESS","value":"HIGH","reason":"Строго принимает лабораторные"},
+            {"kind":"WORKLOAD","value":"LOW","reason":"Заданий немного"}],
+        "level":"POSITIVE","confidence":"MEDIUM","generatedAt":"2026-09-29T09:00:00Z"}"""
+
     val save = SaveTeacherReviewRequest("Математика", TEXT, false, listOf(93724, 93725))
 
     val revision = TeacherReviewRevision(revisionId, ownId, 2, "Математика", TEXT, ReviewRevisionStatus.PENDING, now, null, null)

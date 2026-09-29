@@ -9,7 +9,9 @@ import dev.alllexey.itmowidgets.core.model.resources.ModerationReportRequest
 import dev.alllexey.itmowidgets.core.model.resources.ReportReason
 import dev.alllexey.itmowidgets.core.model.resources.ResourceVoteRequest
 import dev.alllexey.itmowidgets.core.model.reviews.SaveTeacherReviewRequest
+import dev.alllexey.itmowidgets.core.model.reviews.SummaryLevel
 import dev.alllexey.itmowidgets.core.model.reviews.TeacherReviewsResponse
+import dev.alllexey.itmowidgets.core.model.reviews.TeacherSummaryLevel
 import java.util.concurrent.TimeUnit
 import kotlin.test.*
 import kotlinx.coroutines.runBlocking
@@ -46,6 +48,38 @@ class TeacherReviewApiTest {
                 api.reportTeacherReview(fixtures.copyId, ModerationReportRequest(ReportReason.OFFENSIVE))
             },
         ))
+    }
+
+    @Test
+    fun `summary levels repeat the isu parameter and return a typed list`() = MockWebServer().use { server ->
+        server.enqueue(response("""[{"teacherIsu":123456,"level":"POSITIVE"},{"teacherIsu":234567,"level":"MIXED"}]"""))
+
+        val result = runBlocking { client(server).api.teacherSummaryLevels(listOf(123456, 234567)) }
+
+        assertTrue(result.success)
+        assertEquals(listOf(TeacherSummaryLevel(123456, SummaryLevel.POSITIVE), TeacherSummaryLevel(234567, SummaryLevel.MIXED)),
+            result.data)
+        val request = assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+        assertEquals("GET", request.method)
+        assertEquals("/api/teachers/summary-levels?isu=123456&isu=234567", request.path)
+        assertEquals(0, request.bodySize)
+    }
+
+    @Test
+    fun `a summary level with an unknown tone is rejected`(): Unit = MockWebServer().use { server ->
+        server.enqueue(response("""[{"teacherIsu":123456,"level":"NEUTRAL"}]"""))
+
+        assertFailsWith<JsonParseException> { runBlocking { client(server).api.teacherSummaryLevels(listOf(123456)) } }
+    }
+
+    @Test
+    fun `a review reply carries its summary`() = MockWebServer().use { server ->
+        val withSummary = fixtures.response.copy(summary = fixtures.summary)
+        server.enqueue(response(client(server).gson.toJson(withSummary)))
+
+        val result = runBlocking { client(server).api.teacherReviews(100001) }
+
+        assertEquals(withSummary, result.data)
     }
 
     @Test

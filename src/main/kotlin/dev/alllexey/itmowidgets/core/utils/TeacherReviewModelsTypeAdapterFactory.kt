@@ -4,6 +4,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParseException
 import dev.alllexey.itmowidgets.core.model.reviews.*
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.util.UUID
@@ -20,10 +21,17 @@ class TeacherReviewModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFac
         "submittedAt" to 's'),
     ModeratedTeacherReview::class.java to mapOf("id" to 's', "teacherIsu" to 'i', "anonymous" to 'b', "status" to 's',
         "score" to 'i', "hidden" to 'b', "verification" to 's'),
+    TeacherSummary::class.java to mapOf("reviewCount" to 'i', "description" to 's', "pros" to 'a', "cons" to 'a', "tags" to 'a',
+        "scales" to 'a', "level" to 's', "confidence" to 's', "generatedAt" to 's'),
+    TeacherSummaryScale::class.java to mapOf("kind" to 's', "value" to 's'),
+    TeacherSummaryLevel::class.java to mapOf("teacherIsu" to 'i', "level" to 's'),
 )) {
     override fun validateJson(type: Class<*>, json: JsonObject) {
         when (type) {
-            TeacherReviewsResponse::class.java -> positiveIsu(json)
+            TeacherReviewsResponse::class.java -> {
+                positiveIsu(json)
+                if (present(json, "summary")?.isJsonObject == false) throw JsonParseException("Invalid summary")
+            }
             TeacherReview::class.java -> validateReview(json)
             OwnTeacherReview::class.java -> {
                 uuid(json, "id")
@@ -46,6 +54,14 @@ class TeacherReviewModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFac
                 optionalStrings(json, "teacherName", "reviewNote")
                 if (present(json, "verifiedFlowId")?.let(::isLong) == false) throw JsonParseException("Invalid verifiedFlowId")
             }
+            TeacherSummary::class.java -> validateSummary(json)
+            TeacherSummaryScale::class.java -> {
+                optionalStrings(json, "reason")
+                if (json.get("value").asString == SummaryScaleValue.NOT_ENOUGH_DATA.name && present(json, "reason") != null) {
+                    throw JsonParseException("A scale without data has no reason")
+                }
+            }
+            TeacherSummaryLevel::class.java -> positiveIsu(json)
         }
     }
 
@@ -71,6 +87,24 @@ class TeacherReviewModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFac
         }
     }
 
+    /** Tags stay strings so a tag added by Backend later does not break older clients. */
+    private fun validateSummary(json: JsonObject) {
+        if (json.get("reviewCount").asInt < MIN_SUMMARY_REVIEWS) throw JsonParseException("Invalid reviewCount")
+        for (name in listOf("pros", "cons", "tags")) {
+            if (json.getAsJsonArray(name).any { !isString(it) }) throw JsonParseException("Invalid $name")
+        }
+        val kinds = json.getAsJsonArray("scales").map { scale ->
+            val kind = if (scale.isJsonObject) scale.asJsonObject.get("kind") else null
+            if (kind == null || !isString(kind)) throw JsonParseException("Invalid scales")
+            kind.asString
+        }
+        if (kinds.size != SummaryScaleKind.entries.size || kinds.toSet().size != kinds.size) {
+            throw JsonParseException("A summary has every scale exactly once")
+        }
+        try { Instant.parse(json.get("generatedAt").asString) }
+        catch (error: DateTimeParseException) { throw JsonParseException("Invalid generatedAt", error) }
+    }
+
     private fun present(json: JsonObject, name: String): JsonElement? = json.get(name)?.takeUnless { it.isJsonNull }
 
     private fun positiveIsu(json: JsonObject) {
@@ -90,9 +124,11 @@ class TeacherReviewModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFac
     private fun optionalStrings(json: JsonObject, vararg names: String) {
         for (name in names) {
             val value = present(json, name)
-            if (value != null && !(value.isJsonPrimitive && value.asJsonPrimitive.isString)) throw JsonParseException("Invalid $name")
+            if (value != null && !isString(value)) throw JsonParseException("Invalid $name")
         }
     }
+
+    private fun isString(value: JsonElement) = value.isJsonPrimitive && value.asJsonPrimitive.isString
 
     private fun isInt(value: JsonElement) = isInteger(value) && runCatching { value.asBigDecimal.intValueExact() }.isSuccess
 
@@ -103,5 +139,6 @@ class TeacherReviewModelsTypeAdapterFactory : StrictResourceObjectTypeAdapterFac
 
     private companion object {
         val INTEGER = Regex("-?[0-9]+")
+        const val MIN_SUMMARY_REVIEWS = 3
     }
 }
