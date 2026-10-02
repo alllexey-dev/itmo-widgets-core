@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.alllexey"
-version = "1.7.0-SNAPSHOT"
+version = "1.7.0"
 
 repositories {
     mavenCentral()
@@ -52,7 +52,7 @@ mavenPublishing {
 }
 
 dependencies {
-    api("dev.alllexey:my-itmo-api:1.6.0")
+    api("dev.alllexey:my-itmo-api:1.8.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     testImplementation(kotlin("test"))
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")

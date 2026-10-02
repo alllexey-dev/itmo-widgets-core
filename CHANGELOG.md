@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.7.0-SNAPSHOT — 2026-09-23
+## 1.7.0 — 2026-10-03
 
-Paired with Backend 1.7.0-SNAPSHOT and Android 2.2-SNAPSHOT.
+Paired with Backend 1.7.0 and Android 2.2. Depends on MyItmoApi 1.8.2
+(was 1.6.0).
 
 - 2026-09-29: AI summaries of teacher reviews. `TeacherReviewsResponse` gains
   `summary: TeacherSummary?` (default null; absent and null decode to null)
