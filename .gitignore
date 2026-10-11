@@ -47,3 +47,5 @@ bin/
 .idea/yatool.xml
 .idea/discord.xml
 .idea/workspace.xml
+
+.idea/

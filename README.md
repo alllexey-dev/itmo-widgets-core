@@ -1,48 +1,16 @@
-<h1 align="center">ITMO.Widgets Core</h1>
+# ITMO.Widgets Core (frozen)
 
-<p align="center">
-  <strong>Компонент для уникальных функций приложения <a href="https://github.com/alllexey-dev/ITMO.Widgets">ITMO.Widgets</a> </strong>
-</p>
+Typed Retrofit client for the ITMO.Widgets Backend, `dev.alllexey:itmo-widgets-core` on Maven Central.
 
-**ITMO.Widgets Core** — это ключевой компонент экосистемы ITMO.Widgets, предоставляющий унифицированный доступ к API сервисов проекта.<br>
-Проект использует <a href="https://github.com/alllexey-dev/my-itmo-api">my-itmo-api</a> как основу для аутентификации в сервисах.
+**Frozen at 1.7.0.** The app no longer uses this library: since 2.3 the Backend client lives in
+[ITMO.Widgets](https://github.com/alllexey-dev/ITMO.Widgets) as the `:shared:backend-client` module. The published
+jars stay on Maven Central for installed 2.1/2.2 apps and for the Backend's compatibility tests.
 
+- Contract conventions of 1.x: [docs/contract.md](docs/contract.md)
+- History: [CHANGELOG.md](CHANGELOG.md)
 
-<a href="https://github.com/users/alllexey-dev/projects/1"><strong>Roadmap & status </strong></a>
+## A 1.7.x fix, if one is ever needed
 
-### 🌟 Возможности
-* **Аутентификация:** прозрачное обновление access-token ITMO.ID через my-itmo-api.
-* **API сервисов ITMO.Widgets:** типизированный Retrofit-контракт: профили, друзья, приватность, спорт, устройства, версия приложения.
-* **FCM-модель:** типы данных, которые приложение получает через Google FCM.
-* **Строгое декодирование:** обязательные поля и неизвестные значения перечислений не превращаются в null.
-
-Текущая версия — `1.7.0` в Maven Central, согласованная с Backend `1.7.0` и
-Android `2.2`. Ссылки предметов (категория, видимость «Только я /
-Группа / Поток / Все», голоса, жалобы, закрепление) доступны через `api`,
-модерация — только через отдельный `moderationApi`; сервер проверяет роль при
-каждом действии.
-
-### 🛠️ Зависимости
-* `my-itmo-api`
-* `OkHttp`
-* `Retrofit`
-* `Kotlin Coroutines Core`
-
-### 🚀 Использование
-
-Добавьте в pom.xml:
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>dev.alllexey</groupId>
-        <artifactId>itmo-widgets-core</artifactId>
-        <version>1.7.0</version>
-    </dependency>
-</dependencies>
-```
-
-Изменения — в [CHANGELOG.md](CHANGELOG.md), соглашения контракта — в
-[docs/contract.md](docs/contract.md), правила для агентов — в [AGENTS.md](AGENTS.md).
-
-Сборка: `JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew build`.
+1. Build and test with JDK 17: `./gradlew build`.
+2. Bump `version` in `build.gradle.kts`, add a CHANGELOG entry, publish to Maven Central.
+3. Retrofit, Gson and OkHttp come only transitively through `my-itmo-api` 1.8.2; pin them explicitly if that changes.
